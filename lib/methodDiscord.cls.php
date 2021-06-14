@@ -13,6 +13,14 @@ class methodDiscord {
         $this->factory = $discord->getFactory();
     }
 
+    public function isPrivate(){
+        return "Discord\Parts\User\Member" != get_class($this->message->author);
+    }
+
+    public function isAdmin(){
+        return $this->isPrivate() ? $this->message->author->id == '236245509575016451' : $this->verifRole("MJ");
+    }
+
     public function set($label,$value){
         $this->{$label} = $value;
     }

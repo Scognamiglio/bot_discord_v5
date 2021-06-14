@@ -35,6 +35,5 @@ static $discord;
 static $message;
 $md = false;
 $cb = new combat();
-$fctDiscord = new fctDiscord();
 
 $_SESSION['continue']=true;

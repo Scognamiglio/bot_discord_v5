@@ -20,9 +20,19 @@ $discord->on('ready', function ($discord) {
         $GLOBALS['md']->set("message",$message);
        if(!$message['author']['user']['bot'] && !$message['author']['bot']){
            if($message->content[0] == '!'){
-               global $fctDiscord;
+               global $methodToObject,$allObject;
                preg_match_all("/!([^ ]*) ?(.*)?/s",$message->content,$array);
-               $fctDiscord->appel($array[1][0],$array[2][0]);
+
+               $act = strtolower($array[1][0]);
+
+               if(isset($methodToObject[$act])){
+                   $idObject = $methodToObject[$act];
+                   if($idObject==0 && !$GLOBALS['md']->isAdmin()){
+                       $this->message->channel->sendMessage("interdit !");
+                   }else{
+                       $allObject[$idObject]([$act,$array[2][0]]);
+                   }
+               }
 
            }
        }
