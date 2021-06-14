@@ -11,9 +11,6 @@ class fctDiscord {
         unset($this->methodToObject['__construct']);
         unset($this->methodToObject['__invoke']);
         unset($this->methodToObject['_init']);
-
-        $this->bdd = $GLOBALS['bdd'];
-        $this->methodeAdmin = ['stop','repeat','version','send'];
     }
 
     function init(){
@@ -28,13 +25,15 @@ class fctDiscord {
         $this->init();
         $act = strtolower($act);
 
-        if(in_array($act,$this->methodeAdmin) && !$this->isAdmin){
-            $this->message->channel->sendMessage("interdit !");
-        }else{
-            if(isset($this->methodToObject[$act])){
-                $this->allObject[$this->methodToObject[$act]]([$act,$param]);
+        if(isset($this->methodToObject[$act])){
+            $idObject = $this->methodToObject[$act];
+            if($idObject==0 && !$this->isAdmin){
+                $this->message->channel->sendMessage("interdit !");
+            }else{
+                $this->allObject[$idObject]([$act,$param]);
             }
         }
+
     }
 
 
