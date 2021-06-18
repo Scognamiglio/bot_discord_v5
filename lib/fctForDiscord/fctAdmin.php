@@ -8,6 +8,7 @@ class fctAdmin extends structure {
     public function stop($param){
         $_SESSION['continue']=false;
         $this->message->channel->sendMessage("Bonne nuit <3");
+        sleep(1);
         $this->md->get('discord')->close();
     }
 
