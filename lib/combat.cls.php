@@ -41,4 +41,25 @@ class combat
         return $statDefault;
 
     }
+
+
+    // return pv
+    public function degat($degat,$cible){
+        $stat = $this->get_stat($cible);
+        // TODO
+    }
+
+    // Début combat
+    public function beginEvent(){
+        // Récupérer les utilisateurs ayant le rôle "Event" et remplir la table combat avec leur donnée
+        // utiliser md->getUserWithRole('event') et $this->get_stat($id);
+    }
+
+
+
+    // Pour Zhen
+    public function mob(){
+        // SELECT c.NAME,c.pv,c.pm,round(m.pv*LEVEL) AS pvM,round(m.pm*LEVEL) AS pmM,round(atk*LEVEL) AS atk
+        // FROM combat c INNER JOIN mob m ON SUBSTRING_INDEX(c.name, '-',1)=m.name
+    }
 }

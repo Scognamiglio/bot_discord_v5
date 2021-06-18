@@ -39,6 +39,10 @@ class methodDiscord {
         return false;
     }
 
+    public function getUserWithRole($role){
+        // TODO URGENT ! //
+    }
+
     public function createEmbed($array){
         $embed = new Discord\Parts\Embed\Embed($this->discord);
         foreach ($array as $l=>$v){

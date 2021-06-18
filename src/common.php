@@ -1,6 +1,7 @@
 <?php
 
 include '/composer/vendor/autoload.php';
+
 spl_autoload_register(function ($class) {
     if(file_exists('lib/' . $class . '.cls.php')){
         include 'lib/' . $class . '.cls.php';
@@ -20,7 +21,7 @@ $isProd = (!empty($_SERVER['argv'][1]) && $_SERVER['argv'][1]=='prod') ? 'prod' 
 // Présent pour éviter de mettre le mot de passe en clair
 include "../conf.php";
 
-$allObject = [new fctAdmin(),new fctChara];
+$allObject = [new fctAdmin(),new fctChara()];
 $methodToObject = [];
 foreach ($allObject as $i=>$obj){
     $methodToObject = array_merge($methodToObject,array_fill_keys(get_class_methods($obj),$i));

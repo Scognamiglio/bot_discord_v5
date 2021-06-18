@@ -23,4 +23,8 @@ class fctChara extends structure {
         $this->message->channel->sendEmbed($md->createEmbed($sqlt));
 
     }
+
+    public function test($param){
+        $this->message->channel->sendMessage($param);
+    }
 }

@@ -28,7 +28,7 @@ $discord->on('ready', function ($discord) {
                if(isset($methodToObject[$act])){
                    $idObject = $methodToObject[$act];
                    if($idObject==0 && !$GLOBALS['md']->isAdmin()){
-                       $this->message->channel->sendMessage("interdit !");
+                       $message->channel->sendMessage("interdit !");
                    }else{
                        $allObject[$idObject]([$act,$array[2][0]]);
                    }
