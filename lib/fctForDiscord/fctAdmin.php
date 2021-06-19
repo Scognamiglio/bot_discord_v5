@@ -34,4 +34,9 @@ class fctAdmin extends structure {
         $version = $this->bdd->query("select value from botExtra where label='version'")->fetch()['value'];
         $this->message->channel->sendMessage("La version du bot est $version");
     }
+
+    public function hook($param){
+        global $md;
+        $md->createHook($this->message->channel->id);
+    }
 }

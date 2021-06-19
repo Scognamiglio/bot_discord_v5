@@ -24,7 +24,24 @@ class fctChara extends structure {
 
     }
 
-    public function test($param){
-        $this->message->channel->sendMessage($param);
+    public function pnj($param){
+        global $bdd;
+        $help = "La commande peut-être soit sous le format \n> !pnj -alias m -nom my name -image http://image.png\n\n> !pnj \"m\" \"my name\" \"http://image.png\"\nEt vas créer un pnj nommé \"my name\" avec comme avatar \"http://image.png\" quand on écrit (m) devant son message";
+        $send = function ($m){
+            $this->message->channel->sendMessage($m);
+        };
+        if(empty($param) || $param=="help"){
+            $send($help);return null;
+        }
+        $data = $this->_TraitementData($param,['alias','nom','image']);
+        if(count($data)!=3){
+            $send($help);return null;
+        }
+        $qry = "insert into pnj values ('{$data['alias']}','{$data['nom']}','{$data['image']}','{$this->id}') ON DUPLICATE KEY UPDATE name='{$data['nom']}',img='{$data['image']}'";
+        $bdd->query($qry);
+        $send("Le PNJ a été créé ou mis à jour");
+        unset($send);
+
+
     }
 }

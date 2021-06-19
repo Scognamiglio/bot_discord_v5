@@ -21,15 +21,18 @@ $isProd = (!empty($_SERVER['argv'][1]) && $_SERVER['argv'][1]=='prod') ? 'prod' 
 // Présent pour éviter de mettre le mot de passe en clair
 include "../conf.php";
 
+// TODO optimiser ça //
 $allObject = [new fctAdmin(),new fctChara()];
 $methodToObject = [];
 foreach ($allObject as $i=>$obj){
     $methodToObject = array_merge($methodToObject,array_fill_keys(get_class_methods($obj),$i));
 }
 // Suppression méthode de structure
-unset($methodToObject['__construct']);
-unset($methodToObject['__invoke']);
-unset($methodToObject['_init']);
+$tmp = new structure();
+foreach (get_class_methods($tmp) as $m){
+    unset($methodToObject[$m]);
+}
+unset($tmp);
 
 
 static $discord;

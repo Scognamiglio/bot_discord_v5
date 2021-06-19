@@ -15,9 +15,15 @@ $discord->on('ready', function ($discord) {
 
     echo "Bot is ready!", PHP_EOL;
 
+
+    $discord->on('CHANNEL_CREATE',function ($channel, Discord $discord) {
+        $GLOBALS['md']->createHook($channel->id);
+    });
+
     // Listen for messages.
     $discord->on('message', function ($message, $discord) {
-        $GLOBALS['md']->set("message",$message);
+        global $bdd,$md;
+        $md->set("message",$message);
        if(!$message['author']['user']['bot'] && !$message['author']['bot']){
            if($message->content[0] == '!'){
                global $methodToObject,$allObject;
@@ -27,19 +33,29 @@ $discord->on('ready', function ($discord) {
 
                if(isset($methodToObject[$act])){
                    $idObject = $methodToObject[$act];
-                   if($idObject==0 && !$GLOBALS['md']->isAdmin()){
+                   if($idObject==0 && !$md->isAdmin()){
                        $message->channel->sendMessage("interdit !");
                    }else{
                        $allObject[$idObject]([$act,$array[2][0]]);
                    }
                }
 
+           }else{
+               if(preg_match_all("/^\(([^)]*)\) (.*)$/s",$message->content,$array) > 0){
+                   $id = $message->author->id;
+                   $qry = "SELECT name,img FROM pnj WHERE alias='{$array[1][0]}' AND who='$id'";
+                   $result = $bdd->query($qry)->fetchAll();
+                   if(count($result) > 0){
+                       if($md->speakHook($result[0]['name'],$result[0]['img'],$array[2][0])){
+                           $message->delete();
+                       }
+                   }
+               }
            }
        }
 
        // Vérifie la présence d'action prévu.
        if(!isset($GLOBALS['t']) || (time()-$GLOBALS['t']) > 1 /*5*/){
-           global $bdd;
            $GLOBALS['t'] = time();
            $execs = $bdd->query("SELECT action,param,id FROM exec WHERE horodate < NOW() AND isExec=0")->fetchAll();
            if(count($execs) > 0){
