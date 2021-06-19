@@ -1,9 +1,6 @@
 <?php
 
 class structure {
-    function __construct(){
-        $this->bdd = $GLOBALS['bdd'];
-    }
 
     public function _init(){
         $this->md = $GLOBALS['md'];
@@ -15,7 +12,6 @@ class structure {
     }
 
     public function _TraitementData($data,$struct){
-        // -(nom|image) ((?:(?! -nom| -image).)*)
         $retour = [];
         if(strpos($data,"-".$struct[0])!==false){
             $regex = "/-(".implode('|',$struct).') ((?:(?! -'.implode('| -',$struct).').)*)/s';
@@ -34,7 +30,23 @@ class structure {
 
     public function __invoke($argument)
     {
+        global $bdd,$md;
         $this->_init();
+        $error = "";
+        switch ($this->required) {
+            case "fiche":
+                if(empty($bdd->query("select 1 from perso where idPerso='{$this->id}'")->fetch()))
+                    $error = "Commande nécéssitant une fiche";
+                break;
+            case "admin":
+                if(!$md->isAdmin())
+                    $error = "Commande nécéssitant d'être admin";
+                break;
+        }
+        if(!empty($error)){
+            $this->message->channel->sendMessage($error);
+            return null;
+        }
         $this->{$argument[0]}($argument[1]);
     }
 

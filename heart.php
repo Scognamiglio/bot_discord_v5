@@ -17,7 +17,10 @@ $discord->on('ready', function ($discord) {
 
 
     $discord->on('CHANNEL_CREATE',function ($channel, Discord $discord) {
-        $GLOBALS['md']->createHook($channel->id);
+        global $md;
+        if(!$channel->is_private){
+            $md->createHook($channel->id);
+        }
     });
 
     // Listen for messages.
@@ -32,12 +35,7 @@ $discord->on('ready', function ($discord) {
                $act = strtolower($array[1][0]);
 
                if(isset($methodToObject[$act])){
-                   $idObject = $methodToObject[$act];
-                   if($idObject==0 && !$md->isAdmin()){
-                       $message->channel->sendMessage("interdit !");
-                   }else{
-                       $allObject[$idObject]([$act,$array[2][0]]);
-                   }
+                   $allObject[$methodToObject[$act]]([$act,$array[2][0]]);
                }
 
            }else{

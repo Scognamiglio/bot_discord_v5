@@ -2,12 +2,17 @@
 
 class fctChara extends structure {
 
+    public function __construct()
+    {
+        $this->required = "fiche";
+    }
+
 
     public function fiche($param){
-        global $md;
+        global $md,$bdd;
         $cb = new combat();
 
-        $chara = $this->bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
+        $chara = $bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
         $stats = $cb->get_stat();
         $sqlt = [
             'Author' => $chara['prenom'],

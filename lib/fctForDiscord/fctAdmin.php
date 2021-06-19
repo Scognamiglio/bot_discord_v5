@@ -1,6 +1,11 @@
 <?php
 class fctAdmin extends structure {
 
+    public function __construct()
+    {
+        $this->required = "admin";
+    }
+
     public function repeat($param){
         $this->message->channel->sendMessage($param);
     }
@@ -13,12 +18,13 @@ class fctAdmin extends structure {
     }
 
     public function send($param){
+        global $bdd;
         preg_match_all("/([^ ]*) {([^}]*)}(.*)/s",$param,$array);
         $idCible = $array[1][0];
         $title = $array[2][0];
         $newMsg = $array[3][0];
 
-        $chara = $this->bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
+        $chara = $bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
         $sqlt = [
             'Author' => $chara['prenom'],
             'Thumbnail' => $chara['avatar'],
@@ -31,7 +37,7 @@ class fctAdmin extends structure {
     }
 
     public function version($param){
-        $version = $this->bdd->query("select value from botExtra where label='version'")->fetch()['value'];
+        $version = $bdd->query("select value from botExtra where label='version'")->fetch()['value'];
         $this->message->channel->sendMessage("La version du bot est $version");
     }
 
