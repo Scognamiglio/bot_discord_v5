@@ -33,13 +33,12 @@ $methodToObject = [];
 foreach ($allObject as $i=>$obj){
     $methodToObject = array_merge($methodToObject,array_fill_keys(get_class_methods($obj),$i));
 }
-// Suppression méthode de structure
-$tmp = new structure();
-foreach (get_class_methods($tmp) as $m){
-    unset($methodToObject[$m]);
+// Suppression méthodes appelé en interne (commence par _)
+foreach ($methodToObject as $m=>$i){
+    if($m[0]=="_"){
+        unset($methodToObject[$m]);
+    }
 }
-unset($tmp);
-
 
 static $discord;
 static $message;

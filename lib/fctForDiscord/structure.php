@@ -47,9 +47,61 @@ class structure {
             $this->message->channel->sendMessage($error);
             return null;
         }
+
+        if($argument[1]=="help"){
+            $this->help($argument[0]);
+            return null;
+        }
         $this->{$argument[0]}($argument[1]);
     }
 
+    public function help($param){
+        global $md;
 
+        $help = [
+            'pnj' => [
+                'Title' => "Zheneos Hikari",
+                "Description" =>
+                    "> __**Permet la création d'un pnj**__
+                    
+                    ```
+                    !pnj -alias m -nom my name -image url
+                    !pnj \"m\" \"my name\" \"url\"
+                    ```    
+                    **alias** : à mettre entre () au début du message
+                    **nom** : Le nom du pnj
+                    **image** : L'avatar du pnj"
+            ],
+            'fiche' => [
+                'Title' => "Zheneos Hikari",
+                "Description" => "Affiche la fiche du personnage."
+            ]
+        ];
+
+        if(!empty($help[$param])){
+            $embed = $help[$param];
+            $embed['Author'] = "!$param\n";
+            $embed['Title'] = "Créateur : ".$embed['Title'];
+            $embed['Description'] = $this->_cleanHelp($embed['Description']);
+            $embed['Color'] = "0x4BFFEF";
+            $this->message->channel->sendEmbed($md->createEmbed($embed));
+        }else{
+            if(empty($param)){
+                $msg = implode("\n",array_keys($help));
+            }else{
+                $msg = "Aucune aide écrite pour la commande.";
+            }
+
+            $this->message->channel->sendMessage($msg);
+        }
+    }
+
+    public function _cleanHelp($descr){
+        $array = explode("\n",$descr);
+        foreach ($array as $i=>$str){
+            $array[$i] = trim($str);
+        }
+        return implode("\n",$array);
+    }
 
 }
