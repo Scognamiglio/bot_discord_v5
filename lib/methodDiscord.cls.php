@@ -39,9 +39,48 @@ class methodDiscord {
         return false;
     }
 
-    public function getUserWithRole($role){
-        // TODO URGENT ! //
+
+    public function getMemberInGuild(){
+        if($this->isPrivate()){
+            return false;
+        }
+
+        return $this->message->channel->guild->members;
     }
+
+    public function getRoleId($nameRole){
+        if($this->isPrivate()){
+            return false;
+        }
+
+        foreach ($this->message->channel->guild->roles as $id=>$role){
+            if($role->name == $nameRole){
+                return $id;
+            }
+        }
+
+    }
+    public function getUserWithRole($role){
+        if($this->isPrivate()){
+            return false;
+        }
+        $idRole = $this->getRoleId($role);
+        $members = $this->getMemberInGuild();
+        $return = [];
+        foreach ($members as $member){
+            if(!empty($member->roles[$idRole])){
+                $return[] = $member;
+            }
+        }
+        return $return;
+    }
+
+
+
+
+
+
+
 
     public function createEmbed($array){
         $embed = new Discord\Parts\Embed\Embed($this->discord);
