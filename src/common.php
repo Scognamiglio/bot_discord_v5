@@ -21,8 +21,14 @@ $isProd = (!empty($_SERVER['argv'][1]) && $_SERVER['argv'][1]=='prod') ? 'prod' 
 // Présent pour éviter de mettre le mot de passe en clair
 include "../conf.php";
 
-// TODO optimiser ça //
-$allObject = [new fctAdmin(),new fctChara()];
+
+$allObject = [];
+foreach (scandir("lib/fctForDiscord") as $cls){
+    if(strpos($cls,'fct')!==false){
+        $cls = substr($cls,0,-4);
+        $allObject[] = new $cls();
+    }
+}
 $methodToObject = [];
 foreach ($allObject as $i=>$obj){
     $methodToObject = array_merge($methodToObject,array_fill_keys(get_class_methods($obj),$i));
