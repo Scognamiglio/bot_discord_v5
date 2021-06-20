@@ -56,38 +56,25 @@ class structure {
     }
 
     public function help($param){
-        global $md;
+        global $md,$bdd;
 
-        $help = [
-            'pnj' => [
-                'Title' => "Zheneos Hikari",
-                "Description" =>
-                    "> __**Permet la création d'un pnj**__
-                    
-                    ```
-                    !pnj -alias m -nom my name -image url
-                    !pnj \"m\" \"my name\" \"url\"
-                    ```    
-                    **alias** : à mettre entre () au début du message
-                    **nom** : Le nom du pnj
-                    **image** : L'avatar du pnj"
-            ],
-            'fiche' => [
-                'Title' => "Zheneos Hikari",
-                "Description" => "Affiche la fiche du personnage."
-            ]
-        ];
+        $qry = "select author,texte from help where idHelp='$param'";
+        $result = $bdd->query($qry)->fetch();
 
-        if(!empty($help[$param])){
-            $embed = $help[$param];
+        if(!empty($result)){
             $embed['Author'] = "!$param\n";
-            $embed['Title'] = "Créateur : ".$embed['Title'];
-            $embed['Description'] = $this->_cleanHelp($embed['Description']);
+            $embed['Title'] = "Créateur : ".$result['author'];
+            $embed['Description'] = $this->_cleanHelp($result['texte']);
             $embed['Color'] = "0x4BFFEF";
             $this->message->channel->sendEmbed($md->createEmbed($embed));
         }else{
             if(empty($param)){
-                $msg = implode("\n",array_keys($help));
+                $qry = "select idHelp from help";
+                $result = $bdd->query($qry)->fetchAll();
+                $msg = "fonction avec une aide connu : ";
+                foreach ($result as $r){
+                    $msg.="\n".$r['idHelp'];
+                }
             }else{
                 $msg = "Aucune aide écrite pour la commande.";
             }
