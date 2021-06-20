@@ -45,4 +45,8 @@ static $message;
 $md = false;
 $cb = new combat();
 
+// Outil de méthode en vrac
+
+include 'lib/tools.cls.php';
+
 $_SESSION['continue']=true;

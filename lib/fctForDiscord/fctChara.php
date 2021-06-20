@@ -13,7 +13,7 @@ class fctChara extends structure {
         $cb = new combat();
 
         $chara = $bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
-        $stats = $cb->get_stat();
+        $stats = $cb->getStatsChar();
         $sqlt = [
             'Author' => $chara['prenom'],
             'Thumbnail' => $chara['avatar'],
