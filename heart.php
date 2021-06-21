@@ -36,6 +36,10 @@ $discord->on('ready', function ($discord) {
 
                if(isset($methodToObject[$act])){
                    $allObject[$methodToObject[$act]]([$act,$array[2][0]]);
+                   $retour = $allObject[$methodToObject[$act]]->retour;
+                   if(!empty($retour)){
+                       $message->channel->sendMessage($retour);
+                   }
                }
 
            }else{

@@ -9,6 +9,8 @@ class structure {
         $GLOBALS['id'] = $this->message['author']['id'];
         $this->isPrivate = "Discord\Parts\User\Member" != get_class($this->message->author);
         $this->isAdmin = $this->isPrivate ? $this->message->author->id == '236245509575016451' : $this->md->verifRole("MJ");
+
+        $this->retour = false;
     }
 
     public function _TraitementData($data,$struct){

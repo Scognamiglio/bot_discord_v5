@@ -116,14 +116,6 @@ class combat
         }
 
     }
-
-    // Pour Zhen
-    public function mob()
-    {
-        // SELECT c.NAME,c.pv,c.pm,round(m.pv*LEVEL) AS pvM,round(m.pm*LEVEL) AS pmM,round(atk*LEVEL) AS atk
-        // FROM combat c INNER JOIN mob m ON SUBSTRING_INDEX(c.name, '-',1)=m.name
-        
-    }
 }
 
 

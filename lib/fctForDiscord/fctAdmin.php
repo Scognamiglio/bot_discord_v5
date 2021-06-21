@@ -74,4 +74,43 @@ class fctAdmin extends structure {
         $this->message->channel->sendMessage($msg);
 
     }
+
+    // Pour Zhen
+    public function mob($param)
+    {
+        global $bdd;
+        // SELECT c.NAME,c.pv,c.pm,round(m.pv*LEVEL) AS pvM,round(m.pm*LEVEL) AS pmM,round(atk*LEVEL) AS atk
+        // FROM combat c INNER JOIN mob m ON SUBSTRING_INDEX(c.name, '-',1)=m.name
+
+        $param = explode(" ",$param);
+        $msg = "";
+        if(count($param) != 2){
+            $this->help("mob");return null;
+        }
+
+        $qry = "select pv,pm from mob where name='{$param[0]}'";
+        $result = $bdd->query($qry)->fetch();
+        if(empty($result)){
+            $this->retour = "Monstre non connu";return null;
+        }
+
+        $qry = "select count(1) as c from combat where name like '{$param[0]}%'";
+        if($bdd->query($qry)->fetch()['c']){
+            $param[0] .= $bdd->query($qry)->fetch()['c'];
+        }
+
+        $tab = [
+            'name' => $param[0],
+            'pv' => $result['pv'],
+            'pm' => $result['pm'],
+            'team' => 0,
+            'level' => $param[1]
+        ];
+        $bdd->query(Tools::prepareInsert('combat',$tab));
+        $this->retour = "Le monstre ".$param[0]." à bien était rajouté";
+
+
+
+
+    }
 }
