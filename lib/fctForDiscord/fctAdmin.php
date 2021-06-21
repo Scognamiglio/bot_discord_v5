@@ -32,7 +32,6 @@ class fctAdmin extends structure {
             "Description" => $newMsg,
             "Color" => "0x00AE86"
         ];
-        //$message->channel->sendEmbed($md->createEmbed($sqlt));
         $this->md->sendPrivateMessage($idCible,'',$this->md->createEmbed($sqlt));
     }
 

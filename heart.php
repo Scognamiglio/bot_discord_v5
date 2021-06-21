@@ -28,6 +28,7 @@ $discord->on('ready', function ($discord) {
         global $bdd,$md;
         $md->set("message",$message);
        if(!$message['author']['user']['bot'] && !$message['author']['bot']){
+           $id = $message->author->id;
            if($message->content[0] == '!'){
                global $methodToObject,$allObject;
                preg_match_all("/!([^ ]*) ?(.*)?/s",$message->content,$array);
@@ -42,19 +43,21 @@ $discord->on('ready', function ($discord) {
                    }
                }
 
-           }else{
-               if(preg_match_all("/^\(([^)]*)\) (.*)$/s",$message->content,$array) > 0){
-                   $id = $message->author->id;
-                   $qry = "SELECT name,img FROM pnj WHERE alias='{$array[1][0]}' AND who='$id'";
-                   $result = $bdd->query($qry)->fetchAll();
-                   if(count($result) > 0){
-                       if($md->speakHook($result[0]['name'],$result[0]['img'],$array[2][0])){
-                           $message->delete();
-                       }
+           }
+           elseif(preg_match_all("/^\(([^)]*)\) (.*)$/s",$message->content,$array) > 0){
+               $qry = "SELECT name,img FROM pnj WHERE alias='{$array[1][0]}' AND who='$id'";
+               $result = $bdd->query($qry)->fetchAll();
+               if(count($result) > 0){
+                   if($md->speakHook($result[0]['name'],$result[0]['img'],$array[2][0])){
+                       $message->delete();
                    }
                }
            }
+           elseif(isset($GLOBALS['suivi'][$id]['create'])){
+                include "suivi.php";
+           }
        }
+
 
        // Vérifie la présence d'action prévu.
        if(!isset($GLOBALS['t']) || (time()-$GLOBALS['t']) > 1 /*5*/){
