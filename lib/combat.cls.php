@@ -1,7 +1,9 @@
-<?php
+<?php 
+/* 
+aucun message si pas fct ou exec / this->retour = $parametre > $cherche a acceder a la donnée et send message si plusieur message
+*/
 class combat
 {
-
     public function getStatsChar($id_perso = null)
     {
         global $bdd;
@@ -101,10 +103,8 @@ class combat
     // Début combat
     public function beginEvent()
     {
-        global $bdd;
-        $test = 1;
+        global $bdd, $md;
         // Récupérer les utilisateurs ayant le role "Event" et remplir la table combat avec leur données
-        global $md;
         foreach ($md->getUserWithRole('event') as $cible)
         {
             // var_dump($cible); ## ça te permet de voir le contenu de $cible pour comprendre comment l'utiliser.
@@ -115,6 +115,12 @@ class combat
             $bdd->query(Tools::prepareInsert('combat', $array));
         }
 
+    }
+    public function getStateAll() {
+        global $bdd;
+        $content = $bdd->query("SELECT * FROM combat ORDER BY team");
+        echo($content);
+        return $content;
     }
 }
 

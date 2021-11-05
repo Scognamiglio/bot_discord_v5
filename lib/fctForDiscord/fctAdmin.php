@@ -108,9 +108,14 @@ class fctAdmin extends structure {
         ];
         $bdd->query(Tools::prepareInsert('combat',$tab));
         $this->retour = "Le monstre ".$param[0]." à bien était rajouté";
+    }
 
-
-
-
+    public function stats($args = null)
+    {
+        global $cb; 
+      if ($args === null ) {
+         $msg = $cb->getStateAll();
+         $this->message->channel->sendMessage($msg);
+      }
     }
 }
