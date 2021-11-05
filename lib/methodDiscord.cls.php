@@ -76,7 +76,16 @@ class methodDiscord {
         return $return;
     }
 
+    public function createTopic($name,$type,$permision=null){
+        $body = [
+            'name' => $name,
+            'type'=>$type
+        ];
+        if($type==0){$body['parent_id']=$this->message->channel->parent_id;}
+        $body['permission_overwrites']=$permision;
 
+        $this->postDiscord("https://discord.com/api/v9/guilds/".$this->message->channel->guild->id."/channels",$body);
+    }
 
 
 
@@ -112,14 +121,12 @@ class methodDiscord {
 
     }
 
-    public function createHook($idChannel){
-        global $bdd;
-        $url = "https://discord.com/api/v9/channels/$idChannel/webhooks";
+    public function postDiscord($url,$post){
         $headers = [
             'Content-Type: application/json; charset=utf-8',
-            'authorization:Bot '.$GLOBALS['token'][$GLOBALS['isProd']],
-            'User-Agent:DiscordBot (https://github.com/discord-php/DiscordPHP, v5.1.1)'];
-        $POST = ['name' => 'Hook of Astrem'];
+            'authorization:Bot '.$GLOBALS['token'][$GLOBALS['Env']],
+            'User-Agent:DiscordBot (https://github.com/discord-php/DiscordPHP, v5.1.1)'
+        ];
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -127,9 +134,15 @@ class methodDiscord {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($POST));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post));
+
         $response   = curl_exec($ch);
-        $token = json_decode($response,true);
+        return json_decode($response,true);
+    }
+
+    public function createHook($idChannel){
+        global $bdd;
+        $token = $this->postDiscord("https://discord.com/api/v9/channels/$idChannel/webhooks",['name' => 'Hook of Astrem']);
         $bdd->query("insert into hook values('$idChannel','{$token['token']}','{$token['id']}') ON DUPLICATE KEY UPDATE token='{$token['token']}',idHook='{$token['id']}'");
 
     }
@@ -138,24 +151,13 @@ class methodDiscord {
         global $bdd;
         $id = $this->message->channel->id;
         $qry = "select token,idHook from hook where idCanal='$id'";
-
         $result = $bdd->query($qry)->fetchAll();
         if(count($result) > 0){
-            $url = "https://discord.com/api/webhooks/{$result[0]['idHook']}/{$result[0]['token']}";
-            $headers = [ 'Content-Type: application/json; charset=utf-8' ];
-            $POST = [ 'username' => $name, 'content' => $msg, 'avatar_url' => $img];
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($POST));
-            $response   = curl_exec($ch);
-            echo $response;
+            $POST = ['username' => $name, 'content' => $msg, 'avatar_url' => $img];
+            $this->postDiscord("https://discord.com/api/webhooks/{$result[0]['idHook']}/{$result[0]['token']}",$POST);
             return true;
-        }else{
-            return false;
         }
+        return false;
+
     }
 }

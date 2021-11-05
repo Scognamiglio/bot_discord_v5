@@ -1,10 +1,10 @@
 <?php
 // Créateur Scognamiglio Loïc.
-include "src/common.php";
+include "asset/common.php";
 
 use Discord\Discord;
 $discord = new Discord([
-    'token' => $token[$isProd],
+    'token' => $token[$Env],
     'loadAllMembers' => true
 ]);
 
@@ -18,7 +18,7 @@ $discord->on('ready', function ($discord) {
 
     $discord->on('CHANNEL_CREATE',function ($channel, Discord $discord) {
         global $md;
-        if(!$channel->is_private){
+        if(!$channel->is_private && $channel->type==0){
             $md->createHook($channel->id);
         }
     });
@@ -36,6 +36,7 @@ $discord->on('ready', function ($discord) {
                $act = strtolower($array[1][0]);
 
                if(isset($methodToObject[$act])){
+                   // Check
                    $allObject[$methodToObject[$act]]([$act,$array[2][0]]);
                    $retour = $allObject[$methodToObject[$act]]->retour;
                    if(!empty($retour)){

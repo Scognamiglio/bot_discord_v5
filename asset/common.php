@@ -15,7 +15,7 @@ use Discord\Parts\Embed\Embed;
 
 
 
-$isProd = (!empty($_SERVER['argv'][1]) && $_SERVER['argv'][1]=='prod') ? 'prod' : 'local';
+$Env = (!empty($_SERVER['argv'][1]) && $_SERVER['argv'][1]=='prod') ? 'prod' : 'local';
 
 
 // Présent pour éviter de mettre le mot de passe en clair
