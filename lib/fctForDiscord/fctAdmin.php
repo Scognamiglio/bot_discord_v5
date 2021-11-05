@@ -17,6 +17,12 @@ class fctAdmin extends structure {
         $this->md->get('discord')->close();
     }
 
+    public function restart($param){
+        $this->message->channel->sendMessage("Bonne nuit <3");
+        sleep(1);
+        $this->md->get('discord')->close();
+    }
+
     public function send($param){
         global $bdd;
         preg_match_all("/([^ ]*) {([^}]*)}(.*)/s",$param,$array);

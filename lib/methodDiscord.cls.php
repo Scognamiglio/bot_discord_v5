@@ -123,7 +123,7 @@ class methodDiscord {
     public function postDiscord($url,$post){
         $headers = [
             'Content-Type: application/json; charset=utf-8',
-            'authorization:Bot '.$GLOBALS['token'][$GLOBALS['isProd']],
+            'authorization:Bot '.$GLOBALS['token'][$GLOBALS['Env']],
             'User-Agent:DiscordBot (https://github.com/discord-php/DiscordPHP, v5.1.1)'
         ];
 
@@ -136,7 +136,6 @@ class methodDiscord {
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post));
 
         $response   = curl_exec($ch);
-        var_dump($response);
         return json_decode($response,true);
     }
 
