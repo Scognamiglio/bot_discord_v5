@@ -41,29 +41,20 @@ class combat
 
     }
 
-    public function get_stat($cible, $team)
+    public function getStat($cible)
     {
         global $bdd;
-        if ($team == 0)
-        {
-            $qry = "SELECT c.NAME,c.pv,c.pm,round(m.pv*LEVEL) AS pvM,round(m.pm*LEVEL) AS pmM,round(atk*LEVEL) AS atk FROM combat c INNER JOIN mob m ON SUBSTRING_INDEX(c.name, '-',1)=m.name where m.name='$cible'";
+        $qry = "select idPerso from perso where prenom like '$cible%'";
+        $res = $bdd->query($qry)->fetch();
+        if(!empty($res)){
+            return $this->getStatsChar($res['idPerso']);
+        }else{
+            $qry = "SELECT c.NAME,c.pv,c.pm,round(m.pv*LEVEL) AS pvM,round(m.pm*LEVEL) AS pmM,round(atk*LEVEL) AS atk FROM combat c INNER JOIN mob m ON SUBSTRING_INDEX(c.name, '-',1)=m.name where c.name='$cible'";
             $res = $bdd->query($qry)->fetch();
-            if (empty($res))
-            {
-                return "error";
-            }
+            if (empty($res)) {return "error";}
             return ['pv' => $res['pv'], 'pm' => $res['pm'], 'atk' => $res['atk']];
         }
-        else
-        {
-            $qry = "select idPerso from perso where prenom like '$cible%'";
-            $res = $bdd->query($qry)->fetch();
-            if (empty($res))
-            {
-                return "error";
-            }
-            return $this->getStatsChar($res['idPerso']);
-        }
+
     }
 
     // return pv
@@ -71,17 +62,13 @@ class combat
     {
         global $bdd;
         $result = $bdd->query("SELECT pv,team FROM combat WHERE name = '$cible'")->fetch();
-        if (empty($result))
-        {
-            return "error";
-        }
+
+        if (empty($result)) {return "error";}
         $pvRestants = $result['pv'];
 
-        $stats = $this->get_stat($cible, $result['team']);
-        if ($stats == "error")
-        {
-            return $stats;
-        }
+        $stats = $this->getStat($cible);
+
+        if ($stats == "error") {return $stats;}
         $pvMax = $stats['pv'];
 
         if ($pvRestants != 0)
@@ -89,14 +76,10 @@ class combat
             $pvRestants -= $degat;
             $pvRestants = $pvRestants > $pvMax ? $pvMax : ($pvRestants > 0 ? $pvRestants : 0);
 
-            $bdd->query("UPDATE combat SET pv = ROUND('$pvRestants')
-                        WHERE name = '$cible'");
+            $bdd->query("UPDATE combat SET pv = ROUND('$pvRestants') WHERE name = '$cible'");
             return $pvRestants;
         }
-        else
-        {
-            return false;
-        }
+        return false;
 
     }
 
