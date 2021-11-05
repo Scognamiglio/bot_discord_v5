@@ -116,11 +116,17 @@ class combat
         }
 
     }
-    public function getStateAll() {
+    /**
+     * récupérer les statistique de tout les participants en les regroupant par team dans un tableau 
+     */
+    public function getStatsAll() {
         global $bdd;
-        $content = $bdd->query("SELECT * FROM combat ORDER BY team");
-        echo($content);
-        return $content;
+        $content = $bdd->query("SELECT * FROM combat ORDER BY team")->fetchAll();
+        $tabAff = [];
+        foreach ($content as $cible) {            
+            $tabAff[$cible["team"]][$cible["name"]] = ['pv' => $cible['pv'], 'pm' => $cible['pm'], 'lvl' => $cible['level']];            
+        }
+        return $tabAff;
     }
 }
 

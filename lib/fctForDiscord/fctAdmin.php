@@ -113,13 +113,15 @@ class fctAdmin extends structure {
         $this->retour = "Le monstre ".$param[0]." à bien était rajouté";
     }
 
-    public function stats($args = null)
+    public function stats($param = null)
     {
         global $cb; 
-      if ($args === null ) {
-         $msg = $cb->getStateAll();
-         $this->message->channel->sendMessage($msg);
-      }
+        //var_dump($param);
+        if (empty($param)) {
+            $msg = $cb->getStatsAll();
+            $ret = $msg[1]["Zheneos"]["pv"];
+            $this->message->channel->sendMessage($ret);
+        }
     }
     public function topic($param)
     {
