@@ -1,4 +1,5 @@
 <?php
+/* _commande sont ignoré par bot*/
 class fctAdmin extends structure {
 
     public function __construct()
@@ -49,7 +50,7 @@ class fctAdmin extends structure {
     public function event($param){
         global $cb;
         $cb->beginEvent();
-        $this->message->channel->sendMessage("Tous joueurs avec le rôle event à était ajouter à l'evenement");
+        $this->message->channel->sendMessage("Tous les joueurs avec le rôle event ont été ajoutés à l'évenement");
     }
 
     public function degat($param){
@@ -65,7 +66,7 @@ class fctAdmin extends structure {
             }elseif($result===0){
                 $msg="{$param[0]} est maintenant K.O";
             }elseif($result=="error"){
-                $msg="une erreur à était rencontré.";
+                $msg="une erreur a été rencontré.";
             }else{
                 $msg="Il reste $result points de vie à {$param[0]}";
             }

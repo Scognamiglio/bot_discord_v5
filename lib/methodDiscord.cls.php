@@ -1,4 +1,5 @@
 <?php
+/* rapport direct a Discord */
 use Discord\Helpers\Deferred;
 use function React\Partial\bind as Bind;
 class methodDiscord {

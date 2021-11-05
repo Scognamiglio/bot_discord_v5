@@ -1,4 +1,8 @@
 <?php
+
+/*
+boite a outil 
+*/
 class tools
 {
     public static function prepareInsert($table,$param) {
