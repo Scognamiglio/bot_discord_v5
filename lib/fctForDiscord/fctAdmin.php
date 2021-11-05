@@ -74,12 +74,9 @@ class fctAdmin extends structure {
 
     }
 
-    // Pour Zhen
     public function mob($param)
     {
         global $bdd;
-        // SELECT c.NAME,c.pv,c.pm,round(m.pv*LEVEL) AS pvM,round(m.pm*LEVEL) AS pmM,round(atk*LEVEL) AS atk
-        // FROM combat c INNER JOIN mob m ON SUBSTRING_INDEX(c.name, '-',1)=m.name
 
         $param = explode(" ",$param);
         $msg = "";
@@ -107,9 +104,12 @@ class fctAdmin extends structure {
         ];
         $bdd->query(Tools::prepareInsert('combat',$tab));
         $this->retour = "Le monstre ".$param[0]." à bien était rajouté";
+    }
 
-
-
-
+    public function topic($param)
+    {
+        $data = explode(" ",$param);
+        $p = [['id'=>'344716194533605376','type'=>1,'allow'=>68608,'deny' => 0]];
+        $this->md->createTopic($data[0],$data[1]);
     }
 }

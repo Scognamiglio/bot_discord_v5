@@ -18,7 +18,7 @@ $discord->on('ready', function ($discord) {
 
     $discord->on('CHANNEL_CREATE',function ($channel, Discord $discord) {
         global $md;
-        if(!$channel->is_private){
+        if(!$channel->is_private && $channel->type==0){
             $md->createHook($channel->id);
         }
     });
