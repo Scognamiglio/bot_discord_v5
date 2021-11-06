@@ -73,7 +73,8 @@ $discord->on('ready', function ($discord) {
        }
     });
 });
+$discord->run();
 
-while($_SESSION['continue']){
-    $discord->run();
+if($_SESSION['continue']){
+    echo "newRun";
 }
