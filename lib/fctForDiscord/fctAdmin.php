@@ -7,10 +7,6 @@ class fctAdmin extends structure {
         $this->required = "admin";
     }
 
-    public function repeat($param){
-        $this->message->channel->sendMessage($param);
-    }
-
     public function stop($param){
         $_SESSION['continue']=false;
         $this->message->channel->sendMessage("Bonne nuit <3");
@@ -18,6 +14,7 @@ class fctAdmin extends structure {
         $this->md->get('discord')->close();
     }
 
+    // don't work
     public function restart($param){
         $this->message->channel->sendMessage("Bonne nuit <3");
         sleep(1);
@@ -39,30 +36,23 @@ class fctAdmin extends structure {
             "Description" => $newMsg,
             "Color" => "0x00AE86"
         ];
-        $this->md->sendPrivateMessage($idCible,'',$this->md->createEmbed($sqlt));
+        $this->md->sendPrivateMessage($idCible,'',$sqlt);
     }
 
-    public function version($param){
-        global $bdd;
-        $version = $bdd->query("select value from botExtra where label='version'")->fetch()['value'];
-        $this->message->channel->sendMessage("La version du bot est $version");
-    }
 
     public function hook($param){
-        global $md;
-        $md->createHook($this->message->channel->id);
+        $this->md->createHook($this->message->channel->id);
     }
 
     public function event($param){
         global $cb;
         $cb->beginEvent();
-        $this->message->channel->sendMessage("Tous les joueurs avec le rôle event ont été ajoutés à l'évenement");
+        return "Tous les joueurs avec le rôle event ont été ajoutés à l'évenement";
     }
 
     public function degat($param){
         global $cb;
         $param = explode(" ",$param);
-        $msg = "";
         if(count($param) != 2){
             $msg ="nécessite deux paramètres";
         }else{
@@ -77,7 +67,7 @@ class fctAdmin extends structure {
                 $msg="Il reste $result points de vie à {$param[0]}";
             }
         }
-        $this->message->channel->sendMessage($msg);
+        return $msg;
 
     }
 
@@ -86,20 +76,16 @@ class fctAdmin extends structure {
         global $bdd;
 
         $param = explode(" ",$param);
-        $msg = "";
-        if(count($param) != 2){
-            $this->help("mob");return null;
-        }
+        if(count($param) != 2){return $this->help("mob");}
 
         $qry = "select pv,pm from mob where name='{$param[0]}'";
         $result = $bdd->query($qry)->fetch();
-        if(empty($result)){
-            $this->retour = "Monstre non connu";return null;
-        }
+        if(empty($result)){return "Monstre non connu";}
+
 
         $qry = "select count(1) as c from combat where name like '{$param[0]}%'";
         if($bdd->query($qry)->fetch()['c']){
-            $param[0] .= $bdd->query($qry)->fetch()['c'];
+            $param[0] .= "-".$bdd->query($qry)->fetch()['c'];
         }
 
         $tab = [
@@ -110,19 +96,19 @@ class fctAdmin extends structure {
             'level' => $param[1]
         ];
         $bdd->query(Tools::prepareInsert('combat',$tab));
-        $this->retour = "Le monstre ".$param[0]." à bien était rajouté";
+        return "Le monstre ".$param[0]." à bien était rajouté";
     }
 
     public function stats($param = null)
     {
-        global $cb; 
-        //var_dump($param);
+        global $cb;
         if (empty($param)) {
             $msg = $cb->getStatsAll();
             $ret = $msg[1]["Zheneos"]["pv"];
             $this->message->channel->sendMessage($ret);
         }
     }
+
     public function topic($param)
     {
         $data = explode(" ",$param);

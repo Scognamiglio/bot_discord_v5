@@ -9,8 +9,7 @@ class fctChara extends structure {
 
 
     public function fiche($param){
-        global $md,$bdd;
-        $cb = new combat();
+        global $bdd,$cb;
 
         $chara = $bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
         $stats = $cb->getStatsChar();
@@ -25,20 +24,18 @@ class fctChara extends structure {
             ],
             "Color" => "0x00AE86"
         ];
-        $this->message->channel->sendEmbed($md->createEmbed($sqlt));
+        return $sqlt;
 
     }
 
     public function pnj($param){
         global $bdd;
         $data = $this->_TraitementData($param,['alias','nom','image']);
-        if(count($data)!=3){
-            $this->help("pnj");return null;
-        }
+        if(count($data)!=3){return $this->help("pnj");}
+
         $qry = "insert into pnj values ('{$data['alias']}','{$data['nom']}','{$data['image']}','{$this->id}') ON DUPLICATE KEY UPDATE name='{$data['nom']}',img='{$data['image']}'";
         $bdd->query($qry);
-        $this->message->channel->sendMessage("Le PNJ a été créé ou mis à jour");
-        unset($send);
+        return "Le PNJ a été créé ou mis à jour";
 
 
     }
