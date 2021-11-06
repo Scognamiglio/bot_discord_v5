@@ -79,6 +79,20 @@ class methodDiscord {
         return $return;
     }
 
+    public function getUserbyId($idRole){
+        if($this->isPrivate()){
+            return false;
+        }
+        $members = $this->getMemberInGuild();
+        $return = [];
+        foreach ($members as $member){
+            if($member->id == $idRole){
+                return $member;
+            }
+        }
+        return false;
+    }
+
 
     public function getMemberInGuild(){
         if($this->isPrivate()){
@@ -89,15 +103,15 @@ class methodDiscord {
     }
 
 
-    public function createTopic($name,$type,$permision=null){
+    public function createTopic($name,$type,$parentid=null,$permision=null){
         $body = [
             'name' => $name,
             'type'=>$type
         ];
-        if($type==0){$body['parent_id']=$this->message->channel->parent_id;}
+        if($type==0){$body['parent_id']=empty($parentid) ? $this->message->channel->parent_id : $parentid;}
         $body['permission_overwrites']=$permision;
 
-        $this->postDiscord("https://discord.com/api/v9/guilds/".$this->message->channel->guild->id."/channels",$body);
+        return $this->postDiscord("https://discord.com/api/v9/guilds/".$this->message->channel->guild->id."/channels",$body);
     }
 
 
