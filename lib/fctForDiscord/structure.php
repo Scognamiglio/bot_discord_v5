@@ -49,14 +49,23 @@ class structure {
         }
 
         if($argument[1]=="help"){
-            $this->help($argument[0]);
-            return null;
+            return $this->help($argument[0]);
         }
         return $this->{$argument[0]}($argument[1]);
     }
 
     public function help($param){
-        global $md,$bdd;
+        global $bdd;
+
+        if(empty($param)){
+            $qry = "select idHelp from help";
+            $result = $bdd->query($qry)->fetchAll();
+            $msg = "fonction avec une aide connu : ";
+            foreach ($result as $r){
+                $msg.="\n".$r['idHelp'];
+            }
+            return $msg;
+        }
 
         $qry = "select author,texte from help where idHelp='$param'";
         $result = $bdd->query($qry)->fetch();
@@ -66,21 +75,9 @@ class structure {
             $embed['Title'] = "Créateur : ".$result['author'];
             $embed['Description'] = $this->_cleanHelp($result['texte']);
             $embed['Color'] = "0x4BFFEF";
-            $this->message->channel->sendEmbed($md->createEmbed($embed));
-        }else{
-            if(empty($param)){
-                $qry = "select idHelp from help";
-                $result = $bdd->query($qry)->fetchAll();
-                $msg = "fonction avec une aide connu : ";
-                foreach ($result as $r){
-                    $msg.="\n".$r['idHelp'];
-                }
-            }else{
-                $msg = "Aucune aide écrite pour la commande.";
-            }
-
-            $this->message->channel->sendMessage($msg);
+            return $embed;
         }
+        return "Aucune aide écrite pour la commande.";
     }
 
     public function _cleanHelp($descr){

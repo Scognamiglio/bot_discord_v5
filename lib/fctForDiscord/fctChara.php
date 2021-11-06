@@ -24,16 +24,15 @@ class fctChara extends structure {
             ],
             "Color" => "0x00AE86"
         ];
-        $this->md->sendEmbed($sqlt);
+        return $sqlt;
 
     }
 
     public function pnj($param){
         global $bdd;
         $data = $this->_TraitementData($param,['alias','nom','image']);
-        if(count($data)!=3){
-            $this->help("pnj");return null;
-        }
+        if(count($data)!=3){return $this->help("pnj");}
+
         $qry = "insert into pnj values ('{$data['alias']}','{$data['nom']}','{$data['image']}','{$this->id}') ON DUPLICATE KEY UPDATE name='{$data['nom']}',img='{$data['image']}'";
         $bdd->query($qry);
         return "Le PNJ a été créé ou mis à jour";

@@ -76,15 +76,12 @@ class fctAdmin extends structure {
         global $bdd;
 
         $param = explode(" ",$param);
-        if(count($param) != 2){
-            $this->help("mob");return null;
-        }
+        if(count($param) != 2){return $this->help("mob");}
 
         $qry = "select pv,pm from mob where name='{$param[0]}'";
         $result = $bdd->query($qry)->fetch();
-        if(empty($result)){
-            return "Monstre non connu";
-        }
+        if(empty($result)){return "Monstre non connu";}
+
 
         $qry = "select count(1) as c from combat where name like '{$param[0]}%'";
         if($bdd->query($qry)->fetch()['c']){

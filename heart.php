@@ -39,7 +39,11 @@ $discord->on('ready', function ($discord) {
                    // Check
                    $retour = $allObject[$methodToObject[$act]]([$act,$array[2][0]]);
                    if(!empty($retour)){
-                       $message->channel->sendMessage($retour);
+                       if(is_array($retour)){
+                           $md->sendEmbed($retour);
+                       }else{
+                           $message->channel->sendMessage($retour);
+                       }
                    }
                }
 
