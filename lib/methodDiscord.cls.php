@@ -7,6 +7,9 @@ class methodDiscord {
     private $discord;
     private $message;
 
+    /*
+     * Construct
+     */
     public function __construct($discord)
     {
         $this->discord = $discord;
@@ -14,14 +17,9 @@ class methodDiscord {
         $this->factory = $discord->getFactory();
     }
 
-    public function isPrivate(){
-        return "Discord\Parts\User\Member" != get_class($this->message->author);
-    }
-
-    public function isAdmin(){
-        return $this->isPrivate() ? $this->message->author->id == '236245509575016451' : $this->verifRole("MJ");
-    }
-
+    /*
+     * Accesseur
+     */
     public function set($label,$value){
         $this->{$label} = $value;
     }
@@ -30,6 +28,20 @@ class methodDiscord {
         return isset($this->{$label}) ? $this->{$label} : false;
     }
 
+    /*
+     * Etat
+     */
+    public function isPrivate(){
+        return "Discord\Parts\User\Member" != get_class($this->message->author);
+    }
+
+    public function isAdmin(){
+        return $this->isPrivate() ? $this->message->author->id == '236245509575016451' : $this->verifRole("MJ");
+    }
+
+    /*
+     * Rôles
+     */
     public function verifRole($name){
         $name = strtolower($name);
         foreach ($this->message->author->roles as $role){
@@ -38,15 +50,6 @@ class methodDiscord {
             }
         }
         return false;
-    }
-
-
-    public function getMemberInGuild(){
-        if($this->isPrivate()){
-            return false;
-        }
-
-        return $this->message->channel->guild->members;
     }
 
     public function getRoleId($nameRole){
@@ -76,6 +79,16 @@ class methodDiscord {
         return $return;
     }
 
+
+    public function getMemberInGuild(){
+        if($this->isPrivate()){
+            return false;
+        }
+
+        return $this->message->channel->guild->members;
+    }
+
+
     public function createTopic($name,$type,$permision=null){
         $body = [
             'name' => $name,
@@ -86,9 +99,6 @@ class methodDiscord {
 
         $this->postDiscord("https://discord.com/api/v9/guilds/".$this->message->channel->guild->id."/channels",$body);
     }
-
-
-
 
 
 
@@ -107,7 +117,11 @@ class methodDiscord {
         return $embed;
     }
 
-    public function sendPrivateMessage($id,$text='',$embed=null){
+    public function sendEmbed($array){
+        $this->message->channel->sendEmbed($this->createEmbed($array));
+    }
+
+    public function sendPrivateMessage($id,$text='',$tabEmbed=null){
         global $user;
         $this->discord->users->fetch($id)->done(
             function ($user){
@@ -116,8 +130,8 @@ class methodDiscord {
             function ($error){
             }
         );
+        $embed = (empty($tabEmbed) ? null : $this->createEmbed($tabEmbed));
         $GLOBALS['user']->sendMessage($text,false,$embed);
-        //var_dump($_SESSION['test']);
 
     }
 
