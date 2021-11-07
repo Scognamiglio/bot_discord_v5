@@ -36,7 +36,22 @@ class fctChara extends structure {
         $qry = "insert into pnj values ('{$data['alias']}','{$data['nom']}','{$data['image']}','{$this->id}') ON DUPLICATE KEY UPDATE name='{$data['nom']}',img='{$data['image']}'";
         $bdd->query($qry);
         return "Le PNJ a été créé ou mis à jour";
+    }
 
+    public function lock($param){
+        $pId = $this->message->channel->parent_id;
+        $category = $this->md->getChannelById($pId);
+        $user = $this->md->getUserbyId($this->id);
+        $nom = explode(" ",$user->username)[0];
+        if($category==null || strtolower("dojo ".$nom) != strtolower($category->name)) {return "Vous ne pouvez pas fermer cette zone.";}
 
+        $idRole = $this->md->getRoleId('rp');
+        $perm = null;
+        foreach ($category->permission_overwrites as $c){
+            if($idRole == $c->id){
+                $perm = $c;break;
+            }
+        }
+        var_dump($perm);
     }
 }

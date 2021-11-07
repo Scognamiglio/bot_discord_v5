@@ -1,7 +1,7 @@
 <?php
 
 include '/composer/vendor/autoload.php';
-
+include 'lib/apiDiscord.cls.php';
 spl_autoload_register(function ($class) {
     if(file_exists('lib/' . $class . '.cls.php')){
         include 'lib/' . $class . '.cls.php';

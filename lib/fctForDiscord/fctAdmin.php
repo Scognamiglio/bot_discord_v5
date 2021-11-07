@@ -41,7 +41,7 @@ class fctAdmin extends structure {
 
 
     public function hook($param){
-        $this->md->createHook($this->message->channel->id);
+        ApiDiscord::createHook($this->message->channel->id);
     }
 
     public function event($param){
@@ -116,7 +116,7 @@ class fctAdmin extends structure {
         if(empty($member)){return "user $id inconnu";}
         $p = [['id'=>$id,'type'=>1,'allow'=>68608,'deny' => 0]];
         $nom = explode(" ",$member->username)[0];
-        $category = $this->md->createTopic("Dojo $nom",4,null,$p);
-        $this->md->createTopic("Chambre $nom",0,$category['id']);
+        $category = ApiDiscord::createTopic("Dojo $nom",4,null,$p);
+        ApiDiscord::createTopic("Chambre $nom",0,$category['id']);
     }
 }
