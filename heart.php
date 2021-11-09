@@ -3,9 +3,12 @@
 include "asset/common.php";
 
 use Discord\Discord;
+use Discord\WebSockets\Intents;
 $discord = new Discord([
     'token' => $token[$Env],
-    'loadAllMembers' => true
+    'loadAllMembers' => true,
+    'intents' => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS,
+    'logger' => new \Psr\Log\NullLogger()
 ]);
 
 

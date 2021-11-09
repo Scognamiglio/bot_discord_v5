@@ -119,4 +119,8 @@ class fctAdmin extends structure {
         $category = ApiDiscord::createTopic("Dojo $nom",4,null,$p);
         ApiDiscord::createTopic("Chambre $nom",0,$category['id']);
     }
+
+    public function valid($param){
+
+    }
 }

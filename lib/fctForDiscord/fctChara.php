@@ -45,13 +45,21 @@ class fctChara extends structure {
         $nom = explode(" ",$user->username)[0];
         if($category==null || strtolower("dojo ".$nom) != strtolower($category->name)) {return "Vous ne pouvez pas fermer cette zone.";}
 
-        $idRole = $this->md->getRoleId('rp');
+        $idUse = $this->md->getRoleId('rp');
         $perm = null;
         foreach ($category->permission_overwrites as $c){
-            if($idRole == $c->id){
+            if($idUse == $c->id){
                 $perm = $c;break;
             }
         }
-        var_dump($perm);
+        $isLock = $perm->deny=='1024';
+        $permSet = [
+            'id' => "$idUse",
+            'type' => '0',
+            'allow' => ($isLock ? '68608' : '67584'),
+            'deny' => ($isLock ? '0' : '1024'),
+        ];
+
+        ApiDiscord::ChangePerm($pId,$permSet);
     }
 }
