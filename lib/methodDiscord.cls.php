@@ -2,6 +2,9 @@
 /* rapport direct a Discord */
 use Discord\Helpers\Deferred;
 use function React\Partial\bind as Bind;
+use Discord\Builders\MessageBuilder;
+use Discord\Builders\Components\SelectMenu;
+use Discord\Builders\Components\Option;
 class methodDiscord {
 
     private $discord;
@@ -145,5 +148,36 @@ class methodDiscord {
         $embed = (empty($tabEmbed) ? null : $this->createEmbed($tabEmbed));
         $GLOBALS['user']->sendMessage($text,false,$embed);
 
+    }
+
+    public function createSelect($msg,$options,$func,$return = false){
+        $message = $this->message;
+        $discord = $this->discord;
+
+        $m = MessageBuilder::new();
+        if(is_array($msg)){
+            $m->addEmbed($this->createEmbed($msg));
+        }else{
+            $m->setContent($msg);
+        }
+        $select = SelectMenu::new();
+        foreach ($options as $array){
+            $o = Option::New($array[0],(empty($array[1]) ? $array[0] : $array[1]));
+            if(!empty($array[2])){
+                $o->setDescription($array[2]);
+            }
+            $select->addOption($o);
+        }
+
+
+        $m->addComponent($select);
+        if(!$return){
+            $this->message->channel->sendMessage($m)->then(function($new_message) use ($discord, $message){
+                $message->delete(); //Delete the original ;suggestion message
+            });
+        }
+
+        $select->setListener($func, $discord);
+        return $m;
     }
 }
