@@ -10,40 +10,81 @@ class fctGlobal extends structure {
     function new_char(){
         global $md;
         $msg = "Bienvenue sur le menu pour créer votre fiche !\n\n";
-        $msg .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé)\nCréer votre fiche en passant par le site, pour ça répondre 0\n\n<Discord>\nCréer votre fiche en passant par discord, pour ça répondre 1\n```";
+        $msg .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé PC)\nCréer votre fiche en passant par le site\n\n<Discord>(conseillé phone)\nCréer votre fiche en passant par discord\n```";
 
-        //$GLOBALS['suivi'][$this->id]['create'] = [];
 
         $func = function ($interaction, $options) use (&$func) {
-            global $md;
-            foreach ($options as $option) {
-                $steps = [
-                    [
-                        'msg' => 'Quel est ton genre ?',
-                        'param' => [['Homme','1-Homme'],['Femme','1-Femme'],['Autre','1-Autre']],
-                        'bdd' => 'x',
-                    ],
-                    [
-                        'msg' => 'Quel est ta race ?',
-                        'param' => [['humain','2-humain','faible'],['vampire','2-vampire','fort'],['retour','0-x','Changer le genre']]
-                    ]
-                ];
-                $selected = $option->getValue();
-                $label = $option->getLabel();
-                if($label == "Site"){
-                    $interaction->updateMessage(MessageBuilder::new()->setContent("Aller sur cette url : http://51.91.99.243/SDA/index.php?page=new_char"));
-                    continue;
-                }
-                $step = explode("-",$selected)[0];
-                if(!empty($steps[$step])){
-                    $m = $md->createSelect($steps[$step]['msg'],$steps[$step]['param'],$func);
-                }else{
-                    $m = MessageBuilder::new()->setContent("Ton choix est : $label");
-                }
-                $interaction->updateMessage($m);
+            global $md,$bdd;
+
+            $getJsonBdd = function ($qry){
+                global $bdd;
+                return json_decode($bdd->query($qry)->fetch()[0],true);
+            };
+            $idUserInter = $interaction->member->user->id;
+            $msgDefault = "Bienvenue sur le menu pour créer votre fiche !\n\n";
+            $msgDefault .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé PC)\nCréer votre fiche en passant par le site\n\n<Discord>(conseillé phone)\nCréer votre fiche en passant par discord\n```";
+
+            $msgError = "> ***__Seul le créateur l'interaction doit cliquer.__***\n\n";
+            $steps = [
+                -1 => [
+                    'msg' => $msgDefault,
+                    'param' => 'newChar',
+                    'bddBefore' => 'x'
+                ],
+                0 => [
+                    'msg' => 'Quel est ton genre ?',
+                    'param' => 'genre',
+                    'bddBefore' => 'x',
+                ],
+                1 => [
+                    'msg' => 'Quel est ta voie primaire ? #voie',
+                    'param' => 'vPrimaire',
+                    'bddBefore' => 'genre'
+                ],
+                2 => [
+                    'msg' => 'Quel est ta voie secondaire ? #voie',
+                    'param' => 'vPrimaire',
+                    'bddBefore' => 'vPrimaire'
+                ],
+                3 => [
+                    'msg' => 'Quel est ta race ? #race',
+                    'param' => 'race',
+                    'bddBefore' => 'vSecondaire',
+                ]
+            ];
+
+            $selected = $options[0]->getValue();
+            $label = $options[0]->getLabel();
+            if($label == "Site"){
+                return $interaction->updateMessage(MessageBuilder::new()->setContent("Aller sur cette url : http://51.91.99.243/SDA/index.php?page=new_char"));
             }
+            $arrayData = explode("-",$selected);
+            $step = $arrayData[0];
+            $id = $arrayData[1];
+            $error = $id != $idUserInter;
+            if($error && $label!="Retour") {
+                $step--;
+            }elseif($steps[$step]['bddBefore'] != 'x'){
+                $bdd->query("insert into ficheData values('$id','{$steps[$step]['bddBefore']}','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
+
+            }
+
+            if(empty($steps[$step]) && !$error){
+                return $interaction->updateMessage(MessageBuilder::new()->setContent("Ton choix est : $label"));
+            }
+            $msg = ($error ? $msgError : "").$steps[$step]['msg'];
+
+            $json = $getJsonBdd("select value from botExtra where label='{$steps[$step]['param']}'");
+            $dataTab = array_keys($json);
+            $out = [];
+            foreach ($dataTab as $d){
+                $out[] = [$d,($step+1)."-$id-$d"];
+            }
+            if($step!=-1){$out[] = ["Retour","$step-$id-Retour"];}
+
+            $interaction->updateMessage($md->createSelect($msg,$out,$func));
         };
-        $md->createSelect($msg,[['Site','0-Site'],['Discord','0-Discord']],$func);
+        $md->createSelect($msg,[['Site',"0-{$this->id}-Site"],['Discord',"0-{$this->id}-Discord"]],$func);
     }
 
 }
