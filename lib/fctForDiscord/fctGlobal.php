@@ -8,19 +8,21 @@ class fctGlobal extends structure {
     }
 
     function new_char(){
-        global $md;
+        global $md,$bdd;
+        if(!empty($bdd->query("select 1 from perso where idPerso='{$this->id}'")->fetch())){
+            return "Tu as déjà une fiche.";
+        }
         $msg = "Bienvenue sur le menu pour créer votre fiche !\n\n";
         $msg .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé PC)\nCréer votre fiche en passant par le site\n\n<Discord>(conseillé phone)\nCréer votre fiche en passant par discord\n```";
 
 
         $func = function ($interaction, $options) use (&$func) {
             global $md,$bdd;
-
             $getJsonBdd = function ($qry){
                 global $bdd;
                 return json_decode($bdd->query($qry)->fetch()[0],true);
             };
-            $idUserInter = $interaction->member->user->id;
+            $idUserInter = $interaction->user->id;
             $msgDefault = "Bienvenue sur le menu pour créer votre fiche !\n\n";
             $msgDefault .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé PC)\nCréer votre fiche en passant par le site\n\n<Discord>(conseillé phone)\nCréer votre fiche en passant par discord\n```";
 
@@ -29,12 +31,10 @@ class fctGlobal extends structure {
                 -1 => [
                     'msg' => $msgDefault,
                     'param' => 'newChar',
-                    'bddBefore' => 'x'
                 ],
                 0 => [
                     'msg' => 'Quel est ton genre ?',
                     'param' => 'genre',
-                    'bddBefore' => 'x',
                 ],
                 1 => [
                     'msg' => 'Quel est ta voie primaire ? #voie',
@@ -62,29 +62,132 @@ class fctGlobal extends structure {
             $step = $arrayData[0];
             $id = $arrayData[1];
             $error = $id != $idUserInter;
-            if($error && $label!="Retour") {
-                $step--;
-            }elseif($steps[$step]['bddBefore'] != 'x'){
+            if($error) {
+                $step = $step + ($label == "Retour" ? 1 : -1);
+            }elseif(!empty($steps[$step]['bddBefore']) && $label!="Retour"){
                 $bdd->query("insert into ficheData values('$id','{$steps[$step]['bddBefore']}','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
-
             }
-
             if(empty($steps[$step]) && !$error){
-                return $interaction->updateMessage(MessageBuilder::new()->setContent("Ton choix est : $label"));
+                $arrayData[2] = ucfirst($arrayData[2]);
+                $bdd->query("insert into ficheData values('$id','race','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
+                return $interaction->updateMessage(MessageBuilder::new()->setContent("Utiliser la commande !dataFiche pour finir de compléter ta fiche"));
             }
             $msg = ($error ? $msgError : "").$steps[$step]['msg'];
 
-            $json = $getJsonBdd("select value from botExtra where label='{$steps[$step]['param']}'");
-            $dataTab = array_keys($json);
+            if($steps[$step]['param']=="race"){
+                $raceByVoie = $getJsonBdd("select value from botExtra where label='raceByVoie'");
+                $array = ['all'];
+                $dataTab = [];
+                $result = $bdd->query("SELECT value FROM ficheData WHERE idPerso='$id' AND label IN ('vPrimaire','vSecondaire')")->fetchAll();
+                foreach ($result as $v){
+                    $array[] = $v[0];
+                }
+                foreach ($array as $v) {
+                    $v = strtolower($v);
+                    if (!empty($raceByVoie[$v])) {
+                        foreach ($raceByVoie[$v] as $race) {
+                            $race = strtolower($race);
+                            if (!in_array($race, $dataTab)) {
+                                $dataTab[] = $race;
+                            }
+                        }
+                    }
+                }
+            }else{
+                $json = $getJsonBdd("select value from botExtra where label='{$steps[$step]['param']}'");
+                $dataTab = array_keys($json);
+            }
             $out = [];
             foreach ($dataTab as $d){
                 $out[] = [$d,($step+1)."-$id-$d"];
             }
-            if($step!=-1){$out[] = ["Retour","$step-$id-Retour"];}
+            if($step >0){$out[] = ["Retour",($step-1)."-$id-Retour"];}
 
-            $interaction->updateMessage($md->createSelect($msg,$out,$func));
+            $md->createSelect($msg,$out,$func);
         };
         $md->createSelect($msg,[['Site',"0-{$this->id}-Site"],['Discord',"0-{$this->id}-Discord"]],$func);
+    }
+
+    function datafiche($param){
+        global $bdd,$size;
+        $id = $this->id;
+        $champ = tools::sansAccent(strtolower(preg_split('/[\s]/', $param)[0]));
+
+
+        $tab = [
+            'age' => "Il faut un nombre",
+            'caractere' => "minimum 200 caractères\n!dataFiche caractere\n@paragraphe",
+            'image' => "Mettre l'url",
+            'name' => "Mettre le prenom suivi du nom, le prenom doit être unique",
+            'objectif' => "minimum 200 caractères\n!dataFiche objectif\n@paragraphe",
+            'donName' => 'Indiquer le nom de votre don',
+            'donDescription' => "!dataFiche donDescription\n@paragraphe",
+            'donEveil' => "!dataFiche donEveil\n@paragraphe",
+            'donTranscendance' => "!dataFiche donTranscendance\n@paragraphe",
+            'donComp' => "Des informations complémentaires ? (facultatif)\n!dataFiche donComp\n@paragraphe",
+            'story' => "plusieurs chapitres possible, Le cumul des chapitres doit faire minimum 500 caractères (encore xxx)\n!dataFiche story nom chapitre\n@paragraphe"
+        ];
+
+        $array = array_map('strtolower',array_keys($tab));
+        if(!empty($champ)){
+            $champMaj = [
+                'donname' => 'donName',
+                'dondescription' => 'donDescription',
+                'doneveil' => 'donEveil',
+                'dontranscendance' => 'donTranscendance',
+                'doncomp' => 'donComp'
+            ];
+            if(!in_array($champ,$array)){
+                return "Le paramètre $param est inconnu";
+            }
+            $text = substr($param,strlen($champ)+1);
+            $textArray = explode("```",$text);
+            if($champ == "name"){
+                $sql = "select 1 from perso where prenom like '" . explode(' ', $text)[0] . " %'";
+                if ($bdd->query($sql)->fetch()) {
+                    return "Le premier mot de votre prénom est déjà utilisé.";
+                }
+            }
+            if($champ == "age" && !is_numeric($text) && $text > 0){return "L'âge doit être écrit en nombre";}
+            $taille = strlen(trim($textArray[1]));
+            if(in_array($champ,['caractere','objectif']) && $taille < 200){return "encore au moins ".(200-$taille)." caractères";}
+            if(in_array($champ,['dondescription','doneveil','dontranscendance','doncomp','story']) && $taille < 50){return "encore au moins ".(50-$taille)." caractères";}
+
+            if($champ == "story"){
+                $nbr = $bdd->query("select COUNT(1) FROM ficheData WHERE idPerso='$id' AND label LIKE 'text-story-%'")->fetch()[0];
+                $title = trim($textArray[0]);
+                $bdd->query("insert into ficheData values('$id','title-story-$nbr','$title',now()) ON DUPLICATE KEY UPDATE value='$title',dateInsert=now()");
+                $champ = "text-story-$nbr";
+            }
+
+            $champ = empty($champMaj[$champ]) ? $champ : $champMaj[$champ];
+            $text = addslashes(trim(count($textArray) > 1 ? $textArray[1] : $text));
+            $bdd->query("insert into ficheData values('$id','$champ','$text',now()) ON DUPLICATE KEY UPDATE value='$text',dateInsert=now()");
+
+
+        }
+        $msg = "> **__Avancement__**\nremplacer **@paragraphe** par le texte encadrer de ` ``` ` (retour à la ligne possible dedans)\n```xml\n";
+
+        $results = $bdd->query("select label,value FROM ficheData WHERE idPerso='$id'")->fetchAll();
+        $exist = [];
+        foreach ($results as $result){
+            $exist[$result[0]] = $result[1];
+        }
+
+        foreach ($tab as $id=>$val){
+            if($id=="story"){
+                $size = 0;
+                $countStory = function ($v,$k){global $size;if(strpos($k,"ext-story"))$size+=strlen($v);};
+                array_walk($exist,$countStory);
+                if($size < 500){
+                    $msg.= "<$id>\n".str_replace("xxx",500-$size,$val).!"\n\n";
+                }
+            }elseif(empty($exist[$id])){
+                $msg.= "<$id>\n$val\n\n";
+            }
+        }
+        $msg .= "```\nEx: !dataFiche age 22";
+        return $msg;
     }
 
 }
