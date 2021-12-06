@@ -15,7 +15,7 @@ class fctAdmin extends structure {
     }
 
     // don't work
-    public function restart($param){
+    public function run($param){
         $this->message->channel->sendMessage("Bonne nuit <3");
         sleep(1);
         $this->md->get('discord')->close();
@@ -41,7 +41,7 @@ class fctAdmin extends structure {
 
 
     public function hook($param){
-        $this->md->createHook($this->message->channel->id);
+        ApiDiscord::createHook($this->message->channel->id);
     }
 
     public function event($param){
@@ -111,8 +111,16 @@ class fctAdmin extends structure {
 
     public function topic($param)
     {
-        $data = explode(" ",$param);
-        $p = [['id'=>'344716194533605376','type'=>1,'allow'=>68608,'deny' => 0]];
-        $this->md->createTopic($data[0],$data[1]);
+        $id = explode(" ",$param)[0];
+        $member = $this->md->getUserbyId($id);
+        if(empty($member)){return "user $id inconnu";}
+        $p = [['id'=>$id,'type'=>1,'allow'=>68608,'deny' => 0]];
+        $nom = explode(" ",$member->username)[0];
+        $category = ApiDiscord::createTopic("Dojo $nom",4,null,$p);
+        ApiDiscord::createTopic("Chambre $nom",0,$category['id']);
+    }
+
+    public function valid($param){
+
     }
 }

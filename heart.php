@@ -3,9 +3,12 @@
 include "asset/common.php";
 
 use Discord\Discord;
+use Discord\WebSockets\Intents;
 $discord = new Discord([
     'token' => $token[$Env],
-    'loadAllMembers' => true
+    'loadAllMembers' => true,
+    'intents' => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS,
+    'logger' => new \Psr\Log\NullLogger()
 ]);
 
 
@@ -19,7 +22,7 @@ $discord->on('ready', function ($discord) {
     $discord->on('CHANNEL_CREATE',function ($channel, Discord $discord) {
         global $md;
         if(!$channel->is_private && $channel->type==0){
-            $md->createHook($channel->id);
+            ApiDiscord::createHook($channel->id);
         }
     });
 
@@ -27,7 +30,8 @@ $discord->on('ready', function ($discord) {
     $discord->on('message', function ($message, $discord) {
         global $bdd,$md;
         $md->set("message",$message);
-       if(!$message['author']['user']['bot'] && !$message['author']['bot']){
+        $GLOBALS['message'] = $message;
+       if(!$md->isBot()){
            $id = $message->author->id;
            if($message->content[0] == '!'){
                global $methodToObject,$allObject;
@@ -52,7 +56,7 @@ $discord->on('ready', function ($discord) {
                $qry = "SELECT name,img FROM pnj WHERE alias='{$array[1][0]}' AND who='$id'";
                $result = $bdd->query($qry)->fetchAll();
                if(count($result) > 0){
-                   if($md->speakHook($result[0]['name'],$result[0]['img'],$array[2][0])){
+                   if(ApiDiscord::speakHook($result[0]['name'],$result[0]['img'],$array[2][0])){
                        $message->delete();
                    }
                }

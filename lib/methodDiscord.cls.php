@@ -2,6 +2,9 @@
 /* rapport direct a Discord */
 use Discord\Helpers\Deferred;
 use function React\Partial\bind as Bind;
+use Discord\Builders\MessageBuilder;
+use Discord\Builders\Components\SelectMenu;
+use Discord\Builders\Components\Option;
 class methodDiscord {
 
     private $discord;
@@ -28,6 +31,8 @@ class methodDiscord {
         return isset($this->{$label}) ? $this->{$label} : false;
     }
 
+
+
     /*
      * Etat
      */
@@ -37,6 +42,10 @@ class methodDiscord {
 
     public function isAdmin(){
         return $this->isPrivate() ? $this->message->author->id == '236245509575016451' : $this->verifRole("MJ");
+    }
+
+    public function isBot(){
+        return $this->isPrivate() ? $this->message['author']['bot'] : $this->message['author']['user']['bot'];
     }
 
     /*
@@ -62,7 +71,6 @@ class methodDiscord {
                 return $id;
             }
         }
-
     }
     public function getUserWithRole($role){
         if($this->isPrivate()){
@@ -79,6 +87,25 @@ class methodDiscord {
         return $return;
     }
 
+    public function getUserbyId($idRole){
+        if($this->isPrivate()){
+            return false;
+        }
+        $members = $this->getMemberInGuild();
+        $return = [];
+        foreach ($members as $member){
+            if($member->id == $idRole){
+                return $member;
+            }
+        }
+        return false;
+    }
+
+    public function getChannelById($idChannel){
+        $allChannel = $this->message->channel->guild->channels;
+        return empty($allChannel[$idChannel]) ? null : $allChannel[$idChannel];
+    }
+
 
     public function getMemberInGuild(){
         if($this->isPrivate()){
@@ -86,18 +113,6 @@ class methodDiscord {
         }
 
         return $this->message->channel->guild->members;
-    }
-
-
-    public function createTopic($name,$type,$permision=null){
-        $body = [
-            'name' => $name,
-            'type'=>$type
-        ];
-        if($type==0){$body['parent_id']=$this->message->channel->parent_id;}
-        $body['permission_overwrites']=$permision;
-
-        $this->postDiscord("https://discord.com/api/v9/guilds/".$this->message->channel->guild->id."/channels",$body);
     }
 
 
@@ -135,43 +150,34 @@ class methodDiscord {
 
     }
 
-    public function postDiscord($url,$post){
-        $headers = [
-            'Content-Type: application/json; charset=utf-8',
-            'authorization:Bot '.$GLOBALS['token'][$GLOBALS['Env']],
-            'User-Agent:DiscordBot (https://github.com/discord-php/DiscordPHP, v5.1.1)'
-        ];
+    public function createSelect($msg,$options,$func,$return = false){
+        $message = $this->message;
+        $discord = $this->discord;
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post));
-
-        $response   = curl_exec($ch);
-        return json_decode($response,true);
-    }
-
-    public function createHook($idChannel){
-        global $bdd;
-        $token = $this->postDiscord("https://discord.com/api/v9/channels/$idChannel/webhooks",['name' => 'Hook of Astrem']);
-        $bdd->query("insert into hook values('$idChannel','{$token['token']}','{$token['id']}') ON DUPLICATE KEY UPDATE token='{$token['token']}',idHook='{$token['id']}'");
-
-    }
-
-    public function speakHook($name,$img,$msg){
-        global $bdd;
-        $id = $this->message->channel->id;
-        $qry = "select token,idHook from hook where idCanal='$id'";
-        $result = $bdd->query($qry)->fetchAll();
-        if(count($result) > 0){
-            $POST = ['username' => $name, 'content' => $msg, 'avatar_url' => $img];
-            $this->postDiscord("https://discord.com/api/webhooks/{$result[0]['idHook']}/{$result[0]['token']}",$POST);
-            return true;
+        $m = MessageBuilder::new();
+        if(is_array($msg)){
+            $m->addEmbed($this->createEmbed($msg));
+        }else{
+            $m->setContent($msg);
         }
-        return false;
+        $select = SelectMenu::new();
+        foreach ($options as $array){
+            $o = Option::New($array[0],(empty($array[1]) ? $array[0] : $array[1]));
+            if(!empty($array[2])){
+                $o->setDescription($array[2]);
+            }
+            $select->addOption($o);
+        }
 
+
+        $m->addComponent($select);
+        if(!$return){
+            $this->message->channel->sendMessage($m)->then(function($new_message) use ($discord, $message){
+                $message->delete(); //Delete the original ;suggestion message
+            });
+        }
+
+        $select->setListener($func, $discord);
+        return $m;
     }
 }
