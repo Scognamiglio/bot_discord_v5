@@ -11,13 +11,13 @@ class fctChara extends structure {
     public function fiche($param){
         global $cb;
 
-        $chara = sql::fetch("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'");
+        $chara = sql::fetch("SELECT prenom,avatar,niveau,xp,race,sexe,fd1.value as vpn,vp,fd2.value as vsn,vs FROM perso p left JOIN ficheData fd1 ON p.idPerso=fd1.idPerso AND fd1.label='vPrimaire' left JOIN ficheData fd2 ON p.idPerso=fd2.idPerso AND fd2.label='vSecondaire' WHERE p.idPerso='{$this->id}'");
         $stats = $cb->getStatsChar();
         $sqlt = [
             'Author' => $chara['prenom'],
             'Thumbnail' => $chara['avatar'],
-            'Title' => "Classe : {$chara['classe']}\nNiveau : {$chara['niveau']}\n",
-            "Description" => "> **__Informations générales__**\n\n**Experience** : {$chara['xp']}/1200\n**Race** : {$chara['race']}\n**Sexe** : {$chara['sexe']}\n\n> __**Voies**__\n\n**Arme** : {$chara['arme']} (niv. {$chara['armeLevel']})\n**Elément** : {$chara['element']} (niv. {$chara['elementLevel']})\n\n> **__Statistiques__**",
+            'Title' => "Niveau : {$chara['niveau']}\n",
+            "Description" => "> **__Informations générales__**\n\n**Experience** : {$chara['xp']}/1200\n**Race** : {$chara['race']}\n**Sexe** : {$chara['sexe']}\n\n> __**Voies**__\n\n**Voie primaire** : {$chara['vpn']} (niv. {$chara['vp']})\n**Voie secondaire** : {$chara['vsn']} (niv. {$chara['vs']})\n\n> **__Statistiques__**",
             "FieldValues" => [
                 ["PV : {$stats['pv']}", "**ATK : {$stats['atk']}**","inline"],
                 ["PM : {$stats['pm']}", "**INT : {$stats['int']}**","inline"]

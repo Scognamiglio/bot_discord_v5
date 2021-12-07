@@ -13,9 +13,9 @@ class combat
 
         $statDefault = ['pv' => 200, 'pm' => 20, 'atk' => 20, 'int' => 20];
 
-        $chara = sql::fetch("select niveau,stat from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='$id_perso'");
+        $chara = sql::fetch("select niveau,stats from perso where idPerso='$id_perso'");
         // Stats bonus
-        $statBonus = json_decode($chara['stat'], 'true');
+        $statBonus = json_decode($chara['stats'], 'true');
 
         // race
         $race = sql::fetch("select extra from skill WHERE idSkill= CONCAT('racial-',(SELECT race FROM perso WHERE idPerso='$id_perso'))");

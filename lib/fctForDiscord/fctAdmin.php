@@ -27,7 +27,7 @@ class fctAdmin extends structure {
         $title = $array[2][0];
         $newMsg = $array[3][0];
 
-        $chara = sql::fetch("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'");
+        $chara = sql::fetch("select prenom,avatar from perso where idPerso='{$this->id}'");
         $sqlt = [
             'Author' => $chara['prenom'],
             'Thumbnail' => $chara['avatar'],
