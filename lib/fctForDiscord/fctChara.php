@@ -9,9 +9,9 @@ class fctChara extends structure {
 
 
     public function fiche($param){
-        global $bdd,$cb;
+        global $cb;
 
-        $chara = $bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
+        $chara = sql::fetch("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'");
         $stats = $cb->getStatsChar();
         $sqlt = [
             'Author' => $chara['prenom'],
@@ -29,12 +29,11 @@ class fctChara extends structure {
     }
 
     public function pnj($param){
-        global $bdd;
         $data = $this->_TraitementData($param,['alias','nom','image']);
         if(count($data)!=3){return $this->help("pnj");}
 
         $qry = "insert into pnj values ('{$data['alias']}','{$data['nom']}','{$data['image']}','{$this->id}') ON DUPLICATE KEY UPDATE name='{$data['nom']}',img='{$data['image']}'";
-        $bdd->query($qry);
+        sql::query($qry);
         return "Le PNJ a été créé ou mis à jour";
     }
 

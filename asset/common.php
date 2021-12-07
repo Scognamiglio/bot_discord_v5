@@ -1,7 +1,11 @@
 <?php
 
 include '/composer/vendor/autoload.php';
-include 'lib/apiDiscord.cls.php';
+
+$classStatic = ['apiDiscord','tools','sql'];
+foreach ($classStatic as $cls){
+    include "lib/$cls.cls.php";
+}
 spl_autoload_register(function ($class) {
     if(file_exists('lib/' . $class . '.cls.php')){
         include 'lib/' . $class . '.cls.php';
@@ -45,9 +49,5 @@ static $discord;
 static $message;
 $md = false;
 $cb = new combat();
-
-// Outil de méthode en vrac
-
-include 'lib/tools.cls.php';
 
 $_SESSION['continue']=true;

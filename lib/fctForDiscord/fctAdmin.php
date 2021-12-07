@@ -22,13 +22,12 @@ class fctAdmin extends structure {
     }
 
     public function send($param){
-        global $bdd;
         preg_match_all("/([^ ]*) {([^}]*)}(.*)/s",$param,$array);
         $idCible = $array[1][0];
         $title = $array[2][0];
         $newMsg = $array[3][0];
 
-        $chara = $bdd->query("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'")->fetch();
+        $chara = sql::fetch("select * from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='{$this->id}'");
         $sqlt = [
             'Author' => $chara['prenom'],
             'Thumbnail' => $chara['avatar'],
@@ -73,19 +72,17 @@ class fctAdmin extends structure {
 
     public function mob($param)
     {
-        global $bdd;
-
         $param = explode(" ",$param);
         if(count($param) != 2){return $this->help("mob");}
 
         $qry = "select pv,pm from mob where name='{$param[0]}'";
-        $result = $bdd->query($qry)->fetch();
+        $result = sql::fetch($qry);
         if(empty($result)){return "Monstre non connu";}
 
 
         $qry = "select count(1) as c from combat where name like '{$param[0]}%'";
-        if($bdd->query($qry)->fetch()['c']){
-            $param[0] .= "-".$bdd->query($qry)->fetch()['c'];
+        if(sql::fetch($qry)['c']){
+            $param[0] .= "-".sql::fetch($qry)['c'];
         }
 
         $tab = [
@@ -95,7 +92,7 @@ class fctAdmin extends structure {
             'team' => 0,
             'level' => $param[1]
         ];
-        $bdd->query(Tools::prepareInsert('combat',$tab));
+        sql::query(Tools::prepareInsert('combat',$tab));
         return "Le monstre ".$param[0]." à bien était rajouté";
     }
 
@@ -122,5 +119,9 @@ class fctAdmin extends structure {
 
     public function valid($param){
 
+    }
+
+    public function test($param){
+        var_dump(sql::fetchAll("select value from botExtra"));
     }
 }

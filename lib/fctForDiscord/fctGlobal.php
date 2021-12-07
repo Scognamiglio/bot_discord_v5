@@ -8,8 +8,8 @@ class fctGlobal extends structure {
     }
 
     function new_char(){
-        global $md,$bdd;
-        if(!empty($bdd->query("select 1 from perso where idPerso='{$this->id}'")->fetch())){
+        global $md;
+        if(!empty(sql::fetch("select 1 from perso where idPerso='{$this->id}'"))){
             return "Tu as déjà une fiche.";
         }
         $msg = "Bienvenue sur le menu pour créer votre fiche !\n\n";
@@ -17,11 +17,8 @@ class fctGlobal extends structure {
 
 
         $func = function ($interaction, $options) use (&$func) {
-            global $md,$bdd;
-            $getJsonBdd = function ($qry){
-                global $bdd;
-                return json_decode($bdd->query($qry)->fetch()[0],true);
-            };
+            global $md;
+
             $idUserInter = $interaction->user->id;
             $msgDefault = "Bienvenue sur le menu pour créer votre fiche !\n\n";
             $msgDefault .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé PC)\nCréer votre fiche en passant par le site\n\n<Discord>(conseillé phone)\nCréer votre fiche en passant par discord\n```";
@@ -65,20 +62,20 @@ class fctGlobal extends structure {
             if($error) {
                 $step = $step + ($label == "Retour" ? 1 : -1);
             }elseif(!empty($steps[$step]['bddBefore']) && $label!="Retour"){
-                $bdd->query("insert into ficheData values('$id','{$steps[$step]['bddBefore']}','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
+                sql::query("insert into ficheData values('$id','{$steps[$step]['bddBefore']}','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
             }
             if(empty($steps[$step]) && !$error){
                 $arrayData[2] = ucfirst($arrayData[2]);
-                $bdd->query("insert into ficheData values('$id','race','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
+                sql::query("insert into ficheData values('$id','race','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
                 return $interaction->updateMessage(MessageBuilder::new()->setContent("Utiliser la commande !dataFiche pour finir de compléter ta fiche"));
             }
             $msg = ($error ? $msgError : "").$steps[$step]['msg'];
 
             if($steps[$step]['param']=="race"){
-                $raceByVoie = $getJsonBdd("select value from botExtra where label='raceByVoie'");
+                $raceByVoie = sql::getJsonBdd("select value from botExtra where label='raceByVoie'");
                 $array = ['all'];
                 $dataTab = [];
-                $result = $bdd->query("SELECT value FROM ficheData WHERE idPerso='$id' AND label IN ('vPrimaire','vSecondaire')")->fetchAll();
+                $result = sql::fetchAll("SELECT value FROM ficheData WHERE idPerso='$id' AND label IN ('vPrimaire','vSecondaire')");
                 foreach ($result as $v){
                     $array[] = $v[0];
                 }
@@ -94,7 +91,7 @@ class fctGlobal extends structure {
                     }
                 }
             }else{
-                $json = $getJsonBdd("select value from botExtra where label='{$steps[$step]['param']}'");
+                $json = sql::getJsonBdd("select value from botExtra where label='{$steps[$step]['param']}'");
                 $dataTab = array_keys($json);
             }
             $out = [];
@@ -109,7 +106,7 @@ class fctGlobal extends structure {
     }
 
     function datafiche($param){
-        global $bdd,$size;
+        global $size;
         $id = $this->id;
         $champ = tools::sansAccent(strtolower(preg_split('/[\s]/', $param)[0]));
 
@@ -144,7 +141,7 @@ class fctGlobal extends structure {
             $textArray = explode("```",$text);
             if($champ == "name"){
                 $sql = "select 1 from perso where prenom like '" . explode(' ', $text)[0] . " %'";
-                if ($bdd->query($sql)->fetch()) {
+                if (sql::fetch($sql)) {
                     return "Le premier mot de votre prénom est déjà utilisé.";
                 }
             }
@@ -154,21 +151,21 @@ class fctGlobal extends structure {
             if(in_array($champ,['dondescription','doneveil','dontranscendance','doncomp','story']) && $taille < 50){return "encore au moins ".(50-$taille)." caractères";}
 
             if($champ == "story"){
-                $nbr = $bdd->query("select COUNT(1) FROM ficheData WHERE idPerso='$id' AND label LIKE 'text-story-%'")->fetch()[0];
+                $nbr = sql::fetch("select COUNT(1) FROM ficheData WHERE idPerso='$id' AND label LIKE 'text-story-%'")[0];
                 $title = trim($textArray[0]);
-                $bdd->query("insert into ficheData values('$id','title-story-$nbr','$title',now()) ON DUPLICATE KEY UPDATE value='$title',dateInsert=now()");
+                sql::query("insert into ficheData values('$id','title-story-$nbr','$title',now()) ON DUPLICATE KEY UPDATE value='$title',dateInsert=now()");
                 $champ = "text-story-$nbr";
             }
 
             $champ = empty($champMaj[$champ]) ? $champ : $champMaj[$champ];
             $text = addslashes(trim(count($textArray) > 1 ? $textArray[1] : $text));
-            $bdd->query("insert into ficheData values('$id','$champ','$text',now()) ON DUPLICATE KEY UPDATE value='$text',dateInsert=now()");
+            sql::query("insert into ficheData values('$id','$champ','$text',now()) ON DUPLICATE KEY UPDATE value='$text',dateInsert=now()");
 
 
         }
         $msg = "> **__Avancement__**\nremplacer **@paragraphe** par le texte encadrer de ` ``` ` (retour à la ligne possible dedans)\n```xml\n";
 
-        $results = $bdd->query("select label,value FROM ficheData WHERE idPerso='$id'")->fetchAll();
+        $results = sql::fetchAll("select label,value FROM ficheData WHERE idPerso='$id'");
         $exist = [];
         foreach ($results as $result){
             $exist[$result[0]] = $result[1];
