@@ -22,7 +22,6 @@ class exec {
     }
 
     public function setIsExec($id){
-        global $bdd;
-        $bdd->query("update exec set isExec=1 where id='$id'");
+        sql::query("update exec set isExec=1 where id='$id'");
     }
 }

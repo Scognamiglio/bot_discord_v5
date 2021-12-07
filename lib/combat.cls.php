@@ -6,7 +6,6 @@ class combat
 {
     public function getStatsChar($id_perso = null)
     {
-        global $bdd;
         if (empty($id_perso))
         {
             $id_perso = $GLOBALS['id'];
@@ -14,13 +13,12 @@ class combat
 
         $statDefault = ['pv' => 200, 'pm' => 20, 'atk' => 20, 'int' => 20];
 
-        $chara = $bdd->query("select niveau,stat from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='$id_perso'")->fetch();
-
+        $chara = sql::fetch("select niveau,stat from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='$id_perso'");
         // Stats bonus
         $statBonus = json_decode($chara['stat'], 'true');
 
         // race
-        $race = $bdd->query("select extra from skill WHERE idSkill= CONCAT('racial-',(SELECT race FROM perso WHERE idPerso='$id_perso'))")->fetch();
+        $race = sql::fetch("select extra from skill WHERE idSkill= CONCAT('racial-',(SELECT race FROM perso WHERE idPerso='$id_perso'))");
         $statRace = json_decode($race['extra'], 'true');
         foreach ($statRace as $s => $v)
         {
@@ -43,14 +41,13 @@ class combat
 
     public function getStat($cible)
     {
-        global $bdd;
         $qry = "select idPerso from perso where prenom like '$cible%'";
-        $res = $bdd->query($qry)->fetch();
+        $res = sql::fetch($qry);
         if(!empty($res)){
             return $this->getStatsChar($res['idPerso']);
         }else{
             $qry = "SELECT c.NAME,c.pv,c.pm,round(m.pv*LEVEL) AS pvM,round(m.pm*LEVEL) AS pmM,round(atk*LEVEL) AS atk FROM combat c INNER JOIN mob m ON SUBSTRING_INDEX(c.name, '-',1)=m.name where c.name='$cible'";
-            $res = $bdd->query($qry)->fetch();
+            $res = sql::fetch($qry);
             if (empty($res)) {return "error";}
             return ['pv' => $res['pv'], 'pm' => $res['pm'], 'atk' => $res['atk']];
         }
@@ -60,8 +57,7 @@ class combat
     // return pv
     public function degat($degat, $cible)
     {
-        global $bdd;
-        $result = $bdd->query("SELECT pv,team FROM combat WHERE name = '$cible'")->fetch();
+        $result = sql::fetch("SELECT pv,team FROM combat WHERE name = '$cible'");
 
         if (empty($result)) {return "error";}
         $pvRestants = $result['pv'];
@@ -76,7 +72,7 @@ class combat
             $pvRestants -= $degat;
             $pvRestants = $pvRestants > $pvMax ? $pvMax : ($pvRestants > 0 ? $pvRestants : 0);
 
-            $bdd->query("UPDATE combat SET pv = ROUND('$pvRestants') WHERE name = '$cible'");
+            sql::query("UPDATE combat SET pv = ROUND('$pvRestants') WHERE name = '$cible'");
             return $pvRestants;
         }
         return false;
@@ -86,7 +82,7 @@ class combat
     // Début combat
     public function beginEvent()
     {
-        global $bdd, $md;
+        global $md;
         // Récupérer les utilisateurs ayant le role "Event" et remplir la table combat avec leur données
         foreach ($md->getUserWithRole('event') as $cible)
         {
@@ -95,7 +91,7 @@ class combat
             $nameUser = explode(' ', $cible->username) [0];
             $statsCible = $this->getStatsChar($idUser);
             $array = ["name" => $nameUser, "pv" => $statsCible['pv'], "pm" => $statsCible['pm'], "team" => 1, "level" => 1];
-            $bdd->query(Tools::prepareInsert('combat', $array));
+            sql::query(Tools::prepareInsert('combat', $array));
         }
 
     }
@@ -103,8 +99,7 @@ class combat
      * récupérer les statistique de tout les participants en les regroupant par team dans un tableau 
      */
     public function getStatsAll() {
-        global $bdd;
-        $content = $bdd->query("SELECT * FROM combat ORDER BY team")->fetchAll();
+        $content = sql::fetchAll("SELECT * FROM combat ORDER BY team");
         $tabAff = [];
         foreach ($content as $cible) {            
             $tabAff[$cible["team"]][$cible["name"]] = ['pv' => $cible['pv'], 'pm' => $cible['pm'], 'lvl' => $cible['level']];            

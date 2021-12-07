@@ -30,12 +30,12 @@ class structure {
 
     public function __invoke($argument)
     {
-        global $bdd,$md;
+        global $md;
         $this->_init();
         $error = "";
         switch ($this->required) {
             case "fiche":
-                if(empty($bdd->query("select 1 from perso where idPerso='{$this->id}'")->fetch()))
+                if(empty(sql::fetch("select 1 from perso where idPerso='{$this->id}'")))
                     $error = "Commande nécéssitant une fiche";
                 break;
             case "admin":
@@ -55,11 +55,10 @@ class structure {
     }
 
     public function help($param){
-        global $bdd;
 
         if(empty($param)){
             $qry = "select idHelp from help";
-            $result = $bdd->query($qry)->fetchAll();
+            $result = sql::fetchAll($qry);
             $msg = "fonction avec une aide connu : ";
             foreach ($result as $r){
                 $msg.="\n".$r['idHelp'];
@@ -68,7 +67,7 @@ class structure {
         }
 
         $qry = "select author,texte from help where idHelp='$param'";
-        $result = $bdd->query($qry)->fetch();
+        $result = sql::fetch($qry);
 
         if(!empty($result)){
             $embed['Author'] = "!$param\n";

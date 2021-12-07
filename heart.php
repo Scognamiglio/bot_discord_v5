@@ -28,7 +28,7 @@ $discord->on('ready', function ($discord) {
 
     // Listen for messages.
     $discord->on('message', function ($message, $discord) {
-        global $bdd,$md;
+        global $md;
         $md->set("message",$message);
         $GLOBALS['message'] = $message;
        if(!$md->isBot()){
@@ -54,7 +54,7 @@ $discord->on('ready', function ($discord) {
            }
            elseif(preg_match_all("/^\(([^)]*)\) (.*)$/s",$message->content,$array) > 0){
                $qry = "SELECT name,img FROM pnj WHERE alias='{$array[1][0]}' AND who='$id'";
-               $result = $bdd->query($qry)->fetchAll();
+               $result = sql::fetchAll($qry);
                if(count($result) > 0){
                    if(ApiDiscord::speakHook($result[0]['name'],$result[0]['img'],$array[2][0])){
                        $message->delete();
@@ -70,7 +70,7 @@ $discord->on('ready', function ($discord) {
        // Vérifie la présence d'action prévu.
        if(!isset($GLOBALS['t']) || (time()-$GLOBALS['t']) > 1 /*5*/){
            $GLOBALS['t'] = time();
-           $execs = $bdd->query("SELECT action,param,id FROM exec WHERE horodate < NOW() AND isExec=0")->fetchAll();
+           $execs = sql::fetchAll("SELECT action,param,id FROM exec WHERE horodate < NOW() AND isExec=0");
            if(count($execs) > 0){
                new exec($execs);
            }
