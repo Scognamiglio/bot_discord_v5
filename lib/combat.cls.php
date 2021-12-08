@@ -13,25 +13,26 @@ class combat
 
         $statDefault = ['pv' => 200, 'pm' => 20, 'atk' => 20, 'int' => 20];
 
-        $chara = sql::fetch("select niveau,stat from perso p INNER JOIN persoClasse pc ON p.idPerso=pc.idPerso where p.idPerso='$id_perso'");
+        $chara = sql::fetch("select niveau,stats from perso where idPerso='$id_perso'");
         // Stats bonus
-        $statBonus = json_decode($chara['stat'], 'true');
+        foreach (json_decode($chara['stats'], 'true') as $k=>$v){
+            $statDefault[$k] += $v;
+        }
 
-        // race
-        $race = sql::fetch("select extra from skill WHERE idSkill= CONCAT('racial-',(SELECT race FROM perso WHERE idPerso='$id_perso'))");
-        $statRace = json_decode($race['extra'], 'true');
-        foreach ($statRace as $s => $v)
-        {
-            if (strpos($v, "%"))
-            {
-                $statRace[$s] = (explode("%", $v) [0] * $statDefault[$s] / 100);
+        // skill
+        $result = sql::fetchAll("SELECT extra FROM skillPerso INNER JOIN skill USING (idSkill) WHERE idPerso='$id_perso' AND extra LIKE '%stats%'");
+        $statSkill = ['pv' => 0, 'pm' => 0, 'atk' => 0, 'int' => 0];
+        foreach ($result as $value){
+            $json = json_decode($value['extra'],true);
+            foreach ($json['stats'] as $s=>$v){
+                $statSkill[$s] += (strpos($v, "%") ? (explode("%", $v)[0] * $statDefault[$s] / 100) : $v);
             }
         }
 
-        // classe
+
         foreach ($statDefault as $k => $v)
         {
-            $statDefault[$k] = ($v + $statBonus[$k] + $statRace[$k]) * $chara['niveau'];
+            $statDefault[$k] = ($v + $statSkill[$k]) * $chara['niveau'];
         }
 
         // Item ??? ///
