@@ -96,13 +96,52 @@ class fctAdmin extends structure {
         return "Le monstre ".$param[0]." à bien était rajouté";
     }
 
+    /**
+     * renvoit les statistiques de tous les entités présente dans l'évent
+     * ! attention les nom apparaissent avec une majuscule meme si dans la bdd ce n'est pas le cas > pour l'instnant la bdd n'est pasd sensible a la casse donc c'est ok
+     * TODO : recuperer les stat d'une personne ou d'un groupe
+     * TODO : faire un message si il n'y a pas d'évent
+     */
     public function stats($param = null)
     {
         global $cb;
         if (empty($param)) {
             $msg = $cb->getStatsAll();
-            $ret = $msg[1]["Zheneos"]["pv"];
-            $this->message->channel->sendMessage($ret);
+            //var_dump($msg);
+            //var_dump(array_key_last($msg));
+            $equipe = "";
+            $vivants = "";
+            $ko = "";
+            $ret = "";
+            $curseur = array_keys($msg);
+            $i = 0;
+            foreach ($msg as $element) {
+                # code...
+            //for ($i = 0, $l = count($msg); $i < $l; $i++) {
+                $equipe .= "\n**<Equipe ".($curseur[$i]+1). " >**\n\n";
+                $i++;
+                var_dump($equipe);
+
+                /* if ($msg[$i] === null) {
+                    var_dump("valeur inexistante");
+                } else {
+                   var_dump($msg[$i]);   
+                } */
+              
+                foreach ($element as $key => $value) {
+                    ($value['pv'] > 0) ?
+                        $vivants .= "<" . ucfirst($key) . "> [" . $value['pv'] . " PV]" . "[" . $value['pm'] . " PM]\n"
+                        :
+                        $ko .=  ucfirst($key) . "\n";
+                }
+                $equipe .= ($ko !== "") ? "**KO :**\n```ml\n$ko```\n" : "Aucun KO\n\n";
+                $ko = "";
+                $equipe .= ($vivants !== "") ? "**En état de combattre :\n**```md\n$vivants```" : "Aucun survivant, dommage...\n";
+                $vivants = "";
+                $ret .= $equipe . "\n";
+                $equipe = ""; 
+            }
+            return  "**__Rapport__**\n$ret";
         }
     }
 
