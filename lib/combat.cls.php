@@ -55,11 +55,23 @@ class combat
 
     }
 
+    /**
+     * récupérer les statistique de tout les participants en les regroupant par team dans un tableau
+     */
+    public function getStatsAll() {
+        $content = sql::fetchAll("SELECT * FROM combat ORDER BY team");
+        $tabAff = [];
+        foreach ($content as $cible) {
+            $tabAff[$cible["team"]][$cible["name"]] = ['pv' => $cible['pv'], 'pm' => $cible['pm'], 'lvl' => $cible['level']];
+        }
+        return $tabAff;
+    }
+
+
     // return pv
     public function degat($degat, $cible)
     {
         $result = sql::fetch("SELECT pv,team FROM combat WHERE name = '$cible'");
-
         if (empty($result)) {return "error";}
         $pvRestants = $result['pv'];
 
@@ -96,17 +108,48 @@ class combat
         }
 
     }
-    /**
-     * récupérer les statistique de tout les participants en les regroupant par team dans un tableau 
-     */
-    public function getStatsAll() {
-        $content = sql::fetchAll("SELECT * FROM combat ORDER BY team");
-        $tabAff = [];
-        foreach ($content as $cible) {            
-            $tabAff[$cible["team"]][$cible["name"]] = ['pv' => $cible['pv'], 'pm' => $cible['pm'], 'lvl' => $cible['level']];            
+
+    public function getActionTour($team){
+        $result = sql::fetchAll("SELECT id,perso,skill,cible FROM action INNER JOIN combat ON perso=NAME WHERE team='$team' ORDER BY id");
+        if(empty($result)){return false;}
+
+        $return = [];
+        foreach ($result as $r){
+            if(empty($return[$r['perso']]['stats'])){
+                $return[$r['perso']]['stats'] = $this->getStat($r['perso']);
+            }
+            $return[$r['perso']]['actions'][$r['id']] = [$r['skill'],$r['cible']];
         }
-        return $tabAff;
+        return $return;
+
     }
+
+    public function useSkill($user,$pui){
+        $idAct = array_keys($user['actions'])[0];
+        $act = $user['actions'][$idAct];
+        $extra = sql::getJsonBdd("select extra from skill where idSkill='{$act[0]}'");
+        // Applique l'action pour chaque cible
+        $already = [];
+        foreach (explode(",",$act[1]) as $cible){
+            // Foreach pour gérer les actions dans le bon ordre.
+            foreach ($extra as $label=>$value){
+                $label = strtolower($label);
+                // Si déjà exécuté et ne doit pas être relancer.
+                if(isset($already[$label]) && $already[$label]){continue;}
+
+                if(in_array($label,['heal','dmg'])){
+                    $tmp = round($pui*$value*($label=='dmg' ? 1 : -1));
+                    $this->degat($tmp,$cible);
+                }
+
+                if($label == "selfheal"){
+                    $this->degat(round(-1*$value*$pui),$user['name']);
+                    $already[$label] = true;
+                }
+            }
+        }
+    }
+
 }
 
 

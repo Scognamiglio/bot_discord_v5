@@ -117,7 +117,26 @@ class fctAdmin extends structure {
         ApiDiscord::createTopic("Chambre $nom",0,$category['id']);
     }
 
-    public function valid($param){
+    public function tour($param){
+        global $cb;
+        $team = trim(explode("```",$param)[0]);
+        $actions = $cb->getActionTour($team);
+        if(empty($actions)) {return "Aucune actions pour la team $team";}
+
+        preg_match_all("/\[([^]]*)\] ?(?:\(([^)]*)\))?/s",$param,$actTour);
+        $nbrAction = count($actTour[0]);
+        $error = [];
+        for ($i=0;$i<$nbrAction;$i++){
+            $user = $actTour[1][$i];
+            if(empty($actions[$actTour[1][$i]]['actions'])){$error[] = "l'action de {$actTour[1][$i]} n'est pas défini";continue;}
+            $user = $actions[$user];
+            $user['name'] = $actTour[1][$i];
+            $coef = trim(empty($actTour[2][$i]) ? 0 : $actTour[2][$i]);
+            $pui = $user['stats']['atk'];
+            $pui = strpos($coef,"%") ? ($pui/100)*substr($coef,0,-1) : $pui+$coef;
+
+            $cb->useSkill($user,$pui);
+        }
 
     }
 
