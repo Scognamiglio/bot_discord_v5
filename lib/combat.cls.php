@@ -110,7 +110,7 @@ class combat
     }
 
     public function getActionTour($team){
-        $result = sql::fetchAll("SELECT id,perso,skill,cible FROM action INNER JOIN combat ON perso=NAME WHERE team='$team' ORDER BY id");
+        $result = sql::fetchAll("SELECT id,perso,skill,cible FROM action INNER JOIN combat ON perso=NAME WHERE team='$team' and already='0' ORDER BY id");
         if(empty($result)){return false;}
 
         $return = [];
@@ -147,7 +147,9 @@ class combat
                     $already[$label] = true;
                 }
             }
+
         }
+        sql::query("update action set already=1 where id='$idAct'");
     }
 
 }

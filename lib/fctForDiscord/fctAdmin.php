@@ -127,16 +127,20 @@ class fctAdmin extends structure {
         $nbrAction = count($actTour[0]);
         $error = [];
         for ($i=0;$i<$nbrAction;$i++){
-            $user = $actTour[1][$i];
+            $userName = $actTour[1][$i];
             if(empty($actions[$actTour[1][$i]]['actions'])){$error[] = "l'action de {$actTour[1][$i]} n'est pas défini";continue;}
-            $user = $actions[$user];
-            $user['name'] = $actTour[1][$i];
+            $user = $actions[$userName];
+            $user['name'] = $userName;
             $coef = trim(empty($actTour[2][$i]) ? 0 : $actTour[2][$i]);
             $pui = $user['stats']['atk'];
             $pui = strpos($coef,"%") ? ($pui/100)*substr($coef,0,-1) : $pui+$coef;
 
             $cb->useSkill($user,$pui);
+            $idAct = array_keys($actions[$userName]['actions'])[0];
+            unset($actions[$userName]['actions'][$idAct]);
         }
+
+        // Rajouté le rapport créer par Vymarel-Sama
 
     }
 
