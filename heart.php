@@ -33,7 +33,7 @@ $discord->on('ready', function ($discord) {
         $GLOBALS['message'] = $message;
        if(!$md->isBot()){
            $id = $message->author->id;
-           if($message->content[0] == '!'){
+           if($message->content[0] == '!' || strpos($message->content,"**!") === 0){
                global $methodToObject,$allObject;
                preg_match_all("/!([^ ]*) ?(.*)?/s",$message->content,$array);
 

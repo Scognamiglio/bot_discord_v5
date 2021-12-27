@@ -61,4 +61,52 @@ class fctChara extends structure {
 
         ApiDiscord::ChangePerm($pId,$permSet);
     }
+
+    public function skill($param){
+        global $id;
+        preg_match_all("/^([^\r\n(]*)(?:\(([^)]*)\)?)? ?(?:\[([^\]]*)\]?)?/s",$param,$array);
+        $attaquant = null;
+        if(empty($array)){return "Commande mal formulé";}
+        if($this->isAdmin){
+            $attaquant = empty($array[3][0]) ? null : tools::sansAccent(strtolower(trim($array[3][0])));
+        }
+
+        if($attaquant){
+            $user = sql::fetch("select pm,name from combat where name='$attaquant'");
+            if(empty($user)) {return "attaquant non connu.";}
+        }else{
+            $user = sql::fetch("SELECT pm,name FROM perso INNER JOIN combat ON SUBSTRING_INDEX(prenom, ' ',1)=name WHERE idPerso='{$this->id}'");
+            if(empty($user)) {return "Tu n'es pas dans le combat";}
+        }
+        $skill = empty($array[2][0]) ? 'Attaque' : tools::sansAccent(strtolower(trim($array[2][0])));
+
+        if($attaquant){
+            $rs = sql::fetch("select idSkill,extra from skill where name='$skill'");
+        }else{
+            $rs = sql::fetch("SELECT idSkill,extra FROM skillPerso INNER JOIN skill USING(idSkill) WHERE idPerso='{$this->id}' AND (alias ='$skill' OR NAME='$skill')");
+        }
+
+        if(empty($rs)){return "Skill non connu.";}
+        $extra = json_decode($rs['extra'],true);
+        if(!empty($extra['cost']) && $extra['cost'] > $user[0]){return "Il manque ".($extra['cost']-$user[0])." pm pour lancer le sort";}
+
+        $nbrCible = empty($extra['nbr']) ? 1 : $extra['nbr'];
+        if(is_numeric($nbrCible)){
+            $cibles =  explode(",",tools::sansAccent(strtolower(trim($array[1][0]))));
+            if(count($cibles) != $nbrCible){return "Le nombre de cible doit être égale à $nbrCible";}
+            foreach ($cibles as $cible){
+                if(empty(sql::fetch("select 1 from combat where name='$cible'"))){return "La cible $cible est inconnu";}
+            }
+            $dataCible = implode(",",$cibles);
+        }else{
+            $dataCible = $nbrCible;
+        }
+
+        if(!empty($extra['cost'])){
+            $pm = $user[0]-$extra['cost'];
+            sql::query("update combat set pm='$pm' where name='{$user[1]}'");
+        }
+
+        sql::query(tools::prepareInsert("action",['perso'=>$user[1],'skill'=>$rs['idSkill'], 'cible'=>$dataCible]));
+    }
 }

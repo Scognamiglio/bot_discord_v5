@@ -113,16 +113,16 @@ class fctGlobal extends structure {
 
         $tab = [
             'age' => "Il faut un nombre",
-            'caractere' => "minimum 200 caractères\n!dataFiche caractere\n@paragraphe",
+            'caractere' => "minimum 200 caractères\n!dataFiche caractere\n@texte",
             'image' => "Mettre l'url",
             'name' => "Mettre le prenom suivi du nom, le prenom doit être unique",
-            'objectif' => "minimum 200 caractères\n!dataFiche objectif\n@paragraphe",
+            'objectif' => "minimum 200 caractères\n!dataFiche objectif\n@texte",
             'donName' => 'Indiquer le nom de votre don',
-            'donDescription' => "!dataFiche donDescription\n@paragraphe",
-            'donEveil' => "!dataFiche donEveil\n@paragraphe",
-            'donTranscendance' => "!dataFiche donTranscendance\n@paragraphe",
-            'donComp' => "Des informations complémentaires ? (facultatif)\n!dataFiche donComp\n@paragraphe",
-            'story' => "plusieurs chapitres possible, Le cumul des chapitres doit faire minimum 500 caractères (encore xxx)\n!dataFiche story nom chapitre\n@paragraphe"
+            'donDescription' => "!dataFiche donDescription\n@texte",
+            'donEveil' => "!dataFiche donEveil\n@texte",
+            'donTranscendance' => "!dataFiche donTranscendance\n@texte",
+            'donComp' => "Des informations complémentaires ? (facultatif)\n!dataFiche donComp\n@texte",
+            'story' => "plusieurs chapitres possible, Le cumul des chapitres doit faire minimum 500 caractères (encore xxx)\n!dataFiche story nom chapitre\n@texte"
         ];
 
         $array = array_map('strtolower',array_keys($tab));
@@ -138,7 +138,8 @@ class fctGlobal extends structure {
                 return "Le paramètre $param est inconnu";
             }
             $text = substr($param,strlen($champ)+1);
-            $textArray = explode("```",$text);
+            $textArray = explode("\n",$text);
+            $data = substr($text,strlen($textArray[0])+1);
             if($champ == "name"){
                 $sql = "select 1 from perso where prenom like '" . explode(' ', $text)[0] . " %'";
                 if (sql::fetch($sql)) {
@@ -146,7 +147,7 @@ class fctGlobal extends structure {
                 }
             }
             if($champ == "age" && !is_numeric($text) && $text > 0){return "L'âge doit être écrit en nombre";}
-            $taille = strlen(trim($textArray[1]));
+            $taille = strlen(trim($data));
             if(in_array($champ,['caractere','objectif']) && $taille < 200){return "encore au moins ".(200-$taille)." caractères";}
             if(in_array($champ,['dondescription','doneveil','dontranscendance','doncomp','story']) && $taille < 50){return "encore au moins ".(50-$taille)." caractères";}
 
@@ -158,12 +159,12 @@ class fctGlobal extends structure {
             }
 
             $champ = empty($champMaj[$champ]) ? $champ : $champMaj[$champ];
-            $text = addslashes(trim(count($textArray) > 1 ? $textArray[1] : $text));
+            $text = addslashes(trim(count($textArray) > 1 ? $data : $text));
             sql::query("insert into ficheData values('$id','$champ','$text',now()) ON DUPLICATE KEY UPDATE value='$text',dateInsert=now()");
 
 
         }
-        $msg = "> **__Avancement__**\nremplacer **@paragraphe** par le texte encadrer de ` ``` ` (retour à la ligne possible dedans)\n```xml\n";
+        $msg = "> **__Avancement__**\nremplacer **@texte** par le contenu après un retour à la ligne(retour à la ligne possible dans le contenu)\n```xml\n";
 
         $results = sql::fetchAll("select label,value FROM ficheData WHERE idPerso='$id'");
         $exist = [];
