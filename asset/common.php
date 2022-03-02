@@ -3,8 +3,10 @@
 include '/composer/vendor/autoload.php';
 
 $classStatic = ['apiDiscord','tools','sql'];
-foreach ($classStatic as $cls){
-    include "lib/$cls.cls.php";
+foreach (scandir("lib/static") as $cls){
+    if(strpos($cls,'.')!==0) {
+        include "lib/static/$cls";
+    }
 }
 spl_autoload_register(function ($class) {
     if(file_exists('lib/' . $class . '.cls.php')){
@@ -51,3 +53,6 @@ $md = false;
 $cb = new combat();
 
 $_SESSION['continue']=true;
+
+// Mets en cache toutes les traductions
+trad::init();

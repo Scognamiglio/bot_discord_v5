@@ -144,7 +144,9 @@ class fctAdmin extends structure {
 
     }
 
-    public function test($param){
-        var_dump(sql::fetchAll("select value from botExtra"));
+    public function trad($param){
+        var_dump(_t($param));
+        var_dump(_t($param,'a'));
+        var_dump(_t($param,'a','v'));
     }
 }
