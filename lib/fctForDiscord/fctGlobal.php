@@ -9,42 +9,40 @@ class fctGlobal extends structure {
 
     function new_char(){
         global $md;
-        if(!empty(sql::fetch("select 1 from perso where idPerso='{$this->id}'"))){
-            return "Tu as déjà une fiche.";
+        if(!empty(sql::fetch("select 1 from perso where idPerso='{$this->id}a'"))){
+            return _t('newChar.already');
         }
-        $msg = "Bienvenue sur le menu pour créer votre fiche !\n\n";
-        $msg .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé PC)\nCréer votre fiche en passant par le site\n\n<Discord>(conseillé phone)\nCréer votre fiche en passant par discord\n```";
-
+        $msg = _t('newChar.welcom')."\n\n";
+        $msg .= _t('newChar.begin','```xml\n','\n```');
 
         $func = function ($interaction, $options) use (&$func) {
             global $md;
 
             $idUserInter = $interaction->user->id;
-            $msgDefault = "Bienvenue sur le menu pour créer votre fiche !\n\n";
-            $msgDefault .= "Deux choix s'ouvre à vous maintenant.```xml\n<site> (conseillé PC)\nCréer votre fiche en passant par le site\n\n<Discord>(conseillé phone)\nCréer votre fiche en passant par discord\n```";
-
-            $msgError = "> ***__Seul le créateur l'interaction doit cliquer.__***\n\n";
+            $msgDefault = _t('newChar.welcom')."\n\n";
+            $msgDefault .= _t('newChar.begin','```xml\n','\n```');
+            $msgError = "> ***__"._t('newChar.notUser').".__***\n\n";
             $steps = [
                 -1 => [
                     'msg' => $msgDefault,
                     'param' => 'newChar',
                 ],
                 0 => [
-                    'msg' => 'Quel est ton genre ?',
+                    'msg' => _t('newChar.genre'),
                     'param' => 'genre',
                 ],
                 1 => [
-                    'msg' => 'Quel est ta voie primaire ? #voie',
+                    'msg' => _t('newChar.voieP'),
                     'param' => 'vPrimaire',
                     'bddBefore' => 'genre'
                 ],
                 2 => [
-                    'msg' => 'Quel est ta voie secondaire ? #voie',
+                    'msg' => _t('newChar.voieS'),
                     'param' => 'vPrimaire',
                     'bddBefore' => 'vPrimaire'
                 ],
                 3 => [
-                    'msg' => 'Quel est ta race ? #race',
+                    'msg' => _t('newChar.race'),
                     'param' => 'race',
                     'bddBefore' => 'vSecondaire',
                 ]
@@ -53,7 +51,7 @@ class fctGlobal extends structure {
             $selected = $options[0]->getValue();
             $label = $options[0]->getLabel();
             if($label == "Site"){
-                return $interaction->updateMessage(MessageBuilder::new()->setContent("Aller sur cette url : http://51.91.99.243/SDA/index.php?page=new_char"));
+                return $interaction->updateMessage(MessageBuilder::new()->setContent(_t('newChar.site')));
             }
             $arrayData = explode("-",$selected);
             $step = $arrayData[0];
@@ -67,7 +65,7 @@ class fctGlobal extends structure {
             if(empty($steps[$step]) && !$error){
                 $arrayData[2] = ucfirst($arrayData[2]);
                 sql::query("insert into ficheData values('$id','race','{$arrayData[2]}',now()) ON DUPLICATE KEY UPDATE value='{$arrayData[2]}',dateInsert=now()");
-                return $interaction->updateMessage(MessageBuilder::new()->setContent("Utiliser la commande !dataFiche pour finir de compléter ta fiche"));
+                return $interaction->updateMessage(MessageBuilder::new()->setContent(_t('newChar.finish')));
             }
             $msg = ($error ? $msgError : "").$steps[$step]['msg'];
 
@@ -112,20 +110,19 @@ class fctGlobal extends structure {
 
 
         $tab = [
-            'age' => "Il faut un nombre",
-            'caractere' => "minimum 200 caractères\n!dataFiche caractere\n@texte",
-            'image' => "Mettre l'url",
-            'name' => "Mettre le prenom suivi du nom, le prenom doit être unique",
-            'objectif' => "minimum 200 caractères\n!dataFiche objectif\n@texte",
-            'donName' => 'Indiquer le nom de votre don',
-            'donDescription' => "!dataFiche donDescription\n@texte",
-            'donEveil' => "!dataFiche donEveil\n@texte",
-            'donTranscendance' => "!dataFiche donTranscendance\n@texte",
-            'donComp' => "Des informations complémentaires ? (facultatif)\n!dataFiche donComp\n@texte",
-            'story' => "plusieurs chapitres possible, Le cumul des chapitres doit faire minimum 500 caractères (encore xxx)\n!dataFiche story nom chapitre\n@texte"
+            'age',
+            'caractere',
+            'image',
+            'name',
+            'objectif',
+            'donName',
+            'donDescription',
+            'donEveil',
+            'donTranscendance',
+            'donComp',
+            'story'
         ];
-
-        $array = array_map('strtolower',array_keys($tab));
+        $array = array_map('strtolower',$tab);
         if(!empty($champ)){
             $champMaj = [
                 'donname' => 'donName',
@@ -135,7 +132,7 @@ class fctGlobal extends structure {
                 'doncomp' => 'donComp'
             ];
             if(!in_array($champ,$array)){
-                return "Le paramètre $param est inconnu";
+                return _t('dataFiche.unknown',$param);
             }
             $text = substr($param,strlen($champ)+1);
             $textArray = explode("\n",$text);
@@ -143,13 +140,13 @@ class fctGlobal extends structure {
             if($champ == "name"){
                 $sql = "select 1 from perso where prenom like '" . explode(' ', $text)[0] . " %'";
                 if (sql::fetch($sql)) {
-                    return "Le premier mot de votre prénom est déjà utilisé.";
+                    return _t('dataFiche.errorName');
                 }
             }
-            if($champ == "age" && !is_numeric($text) && $text > 0){return "L'âge doit être écrit en nombre";}
+            if($champ == "age" && !is_numeric($text) && $text > 0){return _t('dataFiche.errorAge');}
             $taille = strlen(trim($data));
-            if(in_array($champ,['caractere','objectif']) && $taille < 200){return "encore au moins ".(200-$taille)." caractères";}
-            if(in_array($champ,['dondescription','doneveil','dontranscendance','doncomp','story']) && $taille < 50){return "encore au moins ".(50-$taille)." caractères";}
+            if(in_array($champ,['caractere','objectif']) && $taille < 200){return _t('dataFiche.errorNbrChar',(200-$taille));}
+            if(in_array($champ,['dondescription','doneveil','dontranscendance','doncomp','story']) && $taille < 50){return _t('dataFiche.errorNbrChar',(50-$taille));}
 
             if($champ == "story"){
                 $nbr = sql::fetch("select COUNT(1) FROM ficheData WHERE idPerso='$id' AND label LIKE 'text-story-%'")[0];
@@ -164,7 +161,8 @@ class fctGlobal extends structure {
 
 
         }
-        $msg = "> **__Avancement__**\nremplacer **@texte** par le contenu après un retour à la ligne(retour à la ligne possible dans le contenu)\n```xml\n";
+        $msg = _t('dataFiche.msg');
+
 
         $results = sql::fetchAll("select label,value FROM ficheData WHERE idPerso='$id'");
         $exist = [];
@@ -172,7 +170,8 @@ class fctGlobal extends structure {
             $exist[$result[0]] = $result[1];
         }
 
-        foreach ($tab as $id=>$val){
+        foreach ($tab as $id){
+            $val = _t("dataFiche.$id");
             if($id=="story"){
                 $size = 0;
                 $countStory = function ($v,$k){global $size;if(strpos($k,"ext-story"))$size+=strlen($v);};
@@ -184,7 +183,7 @@ class fctGlobal extends structure {
                 $msg.= "<$id>\n$val\n\n";
             }
         }
-        $msg .= "```\nEx: !dataFiche age 22";
+        $msg .= "```\n"._t('dataFiche.exemple');
         return $msg;
     }
 
