@@ -46,24 +46,24 @@ class fctAdmin extends structure {
     public function event($param){
         global $cb;
         $cb->beginEvent();
-        return "Tous les joueurs avec le rôle event ont été ajoutés à l'évenement";
+        return _t('event.begin');
     }
 
     public function degat($param){
         global $cb;
         $param = explode(" ",$param);
         if(count($param) != 2){
-            $msg ="nécessite deux paramètres";
+            $msg = _t('errorParam',2);
         }else{
             $result = $cb->degat($param[1],$param[0]);
             if(false===$result){
-                $msg="Action impossible car {$param[0]} est hors-combat";
+                $msg = _t('degat.alreadyKill',$param[0]);
             }elseif($result===0){
-                $msg="{$param[0]} est maintenant K.O";
+                $msg = _t('degat.Kill',$param[0]);
             }elseif($result=="error"){
-                $msg="une erreur a été rencontré.";
+                $msg = _t('error');
             }else{
-                $msg="Il reste $result points de vie à {$param[0]}";
+                $msg = _t('degat.success',$result,$param[0]);
             }
         }
         return $msg;
@@ -77,7 +77,7 @@ class fctAdmin extends structure {
 
         $qry = "select pv,pm from mob where name='{$param[0]}'";
         $result = sql::fetch($qry);
-        if(empty($result)){return "Monstre non connu";}
+        if(empty($result)){return _t('mob.error');}
 
 
         $qry = "select count(1) as c from combat where name like '{$param[0]}%'";
@@ -93,7 +93,7 @@ class fctAdmin extends structure {
             'level' => $param[1]
         ];
         sql::query(Tools::prepareInsert('combat',$tab));
-        return "Le monstre ".$param[0]." à bien était rajouté";
+        return _t('mob.success',$param[0]);
     }
 
     public function stats($param = null)
@@ -121,14 +121,14 @@ class fctAdmin extends structure {
         global $cb;
         $team = trim(explode("```",$param)[0]);
         $actions = $cb->getActionTour($team);
-        if(empty($actions)) {return "Aucune actions pour la team $team";}
+        if(empty($actions)) {return _t('tour.empty',$team);}
 
         preg_match_all("/\[([^]]*)\] ?(?:\(([^)]*)\))?/s",$param,$actTour);
         $nbrAction = count($actTour[0]);
         $error = [];
         for ($i=0;$i<$nbrAction;$i++){
             $userName = $actTour[1][$i];
-            if(empty($actions[$actTour[1][$i]]['actions'])){$error[] = "l'action de {$actTour[1][$i]} n'est pas défini";continue;}
+            if(empty($actions[$actTour[1][$i]]['actions'])){$error[] = _t('tour.notExist',$actTour[1][$i]);continue;}
             $user = $actions[$userName];
             $user['name'] = $userName;
             $coef = trim(empty($actTour[2][$i]) ? 0 : $actTour[2][$i]);
