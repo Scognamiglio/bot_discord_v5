@@ -45,6 +45,7 @@ class sql
     }
 
     public static function getJsonBdd ($qry){
-        return json_decode(sql::fetch($qry)[0],true);
+        $r = sql::fetch($qry);
+        return empty($r) ? false : json_decode($r[0],true);
     }
 }
