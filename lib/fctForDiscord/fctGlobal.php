@@ -1,5 +1,6 @@
 <?php
 use Discord\Builders\MessageBuilder;
+
 class fctGlobal extends structure {
 
     public function __construct()
@@ -187,11 +188,28 @@ class fctGlobal extends structure {
         return $msg;
     }
 
+
+    public function train()
+    {
+        //get id lanceur
+        global $id;
+        // get date du jour
+        $dateFormatte = date("d/m/Y"); 
+        $response = sql::fetch("SELECT * FROM entrainement WHERE id = '$id' AND jourEntrainement = CURRENT_DATE()");
+        if (empty($response)) {
+            sql::query("INSERT INTO entrainement(id,jourEntrainement) VALUES($id,CURRENT_DATE())");
+            //? a voir si ajout :  ON DUPLICATE KEY UPDATE id='$id',jourEntrainement=CURRENT_DATE()
+            //? gerder une compte du nombre de jours entrainés ? > ajouter colomne somme ou faire une requete count() 
+            return "Votre entrainement pour le $dateFormatte à été pris en compte";
+        } else {
+            return "ACTION IMPOSSIBLE : Votre entrainement pour le $dateFormatte à déja été pris en compte\n ||il est tenu compte de l'heure francaise pour le calcul||";
+        }        
+        return "ERREUR: une erreur est survenue. merci d'en faire part au staff en précisant que cela à eu lieu lors de la commande !train";
+    }
     function newtexte($param){
         $data = $this->_TraitementData($param,['id','texte']);
         if(count($data) != 2){return $this->help("newtexte");}
         trad::editTrad($data['id'],$data['texte'],$this->isAdmin);
         return _t("newtexte",$data['id']);
     }
-
 }
