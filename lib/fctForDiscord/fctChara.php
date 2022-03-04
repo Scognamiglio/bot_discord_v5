@@ -16,8 +16,8 @@ class fctChara extends structure {
         $sqlt = [
             'Author' => $chara['prenom'],
             'Thumbnail' => $chara['avatar'],
-            'Title' => "Niveau : {$chara['niveau']}\n",
-            "Description" => "> **__Informations générales__**\n\n**Experience** : {$chara['xp']}/1200\n**Race** : {$chara['race']}\n**Sexe** : {$chara['sexe']}\n\n> __**Voies**__\n\n**Voie primaire** : {$chara['vpn']} (niv. {$chara['vp']})\n**Voie secondaire** : {$chara['vsn']} (niv. {$chara['vs']})\n\n> **__Statistiques__**",
+            'Title' => _t('fiche.niveau')." : {$chara['niveau']}\n",
+            "Description" => "> **__"._t('fiche.info')."__**\n\n**"._t('fiche.xp')."** : {$chara['xp']}/1200\n**"._t('fiche.race')."** : {$chara['race']}\n**"._t('fiche.sexe')."** : {$chara['sexe']}\n\n> __**"._t('fiche.voie')."**__\n\n**"._t('fiche.vP')."** : {$chara['vpn']} (niv. {$chara['vp']})\n**"._t('fiche.vS')."** : {$chara['vsn']} (niv. {$chara['vs']})\n\n> **__"._t('fiche.stats')."__**",
             "FieldValues" => [
                 ["PV : {$stats['pv']}", "**ATK : {$stats['atk']}**","inline"],
                 ["PM : {$stats['pm']}", "**INT : {$stats['int']}**","inline"]
@@ -34,7 +34,7 @@ class fctChara extends structure {
 
         $qry = "insert into pnj values ('{$data['alias']}','{$data['nom']}','{$data['image']}','{$this->id}') ON DUPLICATE KEY UPDATE name='{$data['nom']}',img='{$data['image']}'";
         sql::query($qry);
-        return "Le PNJ a été créé ou mis à jour";
+        return _t('pnj.success');
     }
 
     public function lock($param){
@@ -42,7 +42,7 @@ class fctChara extends structure {
         $category = $this->md->getChannelById($pId);
         $user = $this->md->getUserbyId($this->id);
         $nom = explode(" ",$user->username)[0];
-        if($category==null || strtolower("dojo ".$nom) != strtolower($category->name)) {return "Vous ne pouvez pas fermer cette zone.";}
+        if($category==null || strtolower("dojo ".$nom) != strtolower($category->name)) {return _t('lock.error');}
 
         $idUse = $this->md->getRoleId('rp');
         $perm = null;
@@ -66,17 +66,17 @@ class fctChara extends structure {
         global $id;
         preg_match_all("/^([^\r\n(]*)(?:\(([^)]*)\)?)? ?(?:\[([^\]]*)\]?)?/s",$param,$array);
         $attaquant = null;
-        if(empty($array)){return "Commande mal formulé";}
+        if(empty($array)){return $this->help("skill");}
         if($this->isAdmin){
             $attaquant = empty($array[3][0]) ? null : tools::sansAccent(strtolower(trim($array[3][0])));
         }
 
         if($attaquant){
             $user = sql::fetch("select pm,name from combat where name='$attaquant'");
-            if(empty($user)) {return "attaquant non connu.";}
+            if(empty($user)) {return _t('skill.who');}
         }else{
             $user = sql::fetch("SELECT pm,name FROM perso INNER JOIN combat ON SUBSTRING_INDEX(prenom, ' ',1)=name WHERE idPerso='{$this->id}'");
-            if(empty($user)) {return "Tu n'es pas dans le combat";}
+            if(empty($user)) {return _t('skill.notInBattle');}
         }
         $skill = empty($array[2][0]) ? 'Attaque' : tools::sansAccent(strtolower(trim($array[2][0])));
 
@@ -86,16 +86,16 @@ class fctChara extends structure {
             $rs = sql::fetch("SELECT idSkill,extra FROM skillPerso INNER JOIN skill USING(idSkill) WHERE idPerso='{$this->id}' AND (alias ='$skill' OR NAME='$skill')");
         }
 
-        if(empty($rs)){return "Skill non connu.";}
+        if(empty($rs)){return _t('skill.unknown');}
         $extra = json_decode($rs['extra'],true);
-        if(!empty($extra['cost']) && $extra['cost'] > $user[0]){return "Il manque ".($extra['cost']-$user[0])." pm pour lancer le sort";}
+        if(!empty($extra['cost']) && $extra['cost'] > $user[0]){return _t('skill.lost',($extra['cost']-$user[0]));}
 
         $nbrCible = empty($extra['nbr']) ? 1 : $extra['nbr'];
         if(is_numeric($nbrCible)){
             $cibles =  explode(",",tools::sansAccent(strtolower(trim($array[1][0]))));
-            if(count($cibles) != $nbrCible){return "Le nombre de cible doit être égale à $nbrCible";}
+            if(count($cibles) != $nbrCible){return _t('skill.nbr',$nbrCible);}
             foreach ($cibles as $cible){
-                if(empty(sql::fetch("select 1 from combat where name='$cible'"))){return "La cible $cible est inconnu";}
+                if(empty(sql::fetch("select 1 from combat where name='$cible'"))){return _t('skill.unknownCible',$cible);}
             }
             $dataCible = implode(",",$cibles);
         }else{
