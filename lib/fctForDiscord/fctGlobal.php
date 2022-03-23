@@ -212,4 +212,46 @@ class fctGlobal extends structure {
         trad::editTrad($data['id'],$data['texte'],$this->isAdmin);
         return _t("newtexte",$data['id']);
     }
+    /**
+     * calcule un date fictive a partir d'une date réelle et d'un ecoulement du temps variable.
+     * le format avec des chiffre est forcé car les textes apparaitrait en anglais sinon
+     * pas mettre une valeur trop grande au niveau de lamultiplication sinon ca casse le calcul
+     */
+     public function daterp()
+     {
+        /*récupérer les valeurs suivantes
+        - jour de début du RP, valeur IRL car on va utiliser la date reelle pour le calcul on evite une conversion supplementaire de IRL vers fictif
+        - vitesse d'écoulement pour un jour IRL (1 = 1 jour/jour IRL, 0.5 = 0,5 jour pour 1 IRL)
+        */
+        $datas = sql::fetchAll("SELECT value FROM botExtra WHERE label = 'baseJourIRL' or label = 'joursRpParJourIRL'  ");
+        // calculer la différence entre date actuelle et jour du début du RP : en seconde
+              
+        try {
+            if (!strtotime($datas[0]["value"])) {
+                throw new Exception ("la date recue n'est pas valide");
+            }
+            $dateDebutRP = new DateTime($datas[0]["value"]);
+            $dateActuelle = new DateTime('now'); 
+            if ($dateDebutRP>$dateActuelle) {
+                throw new Exception ("date impossible à calculer");
+            }
+            if (!is_numeric($datas[1]["value"])) {
+                throw new Exception ("valeur inattendu pour l'écoulement du temps");
+            }
+            if ($datas[1]["value"]> 10000||$datas[1]["value"]<=0) {
+                throw new Exception ("l'écoulement du temps ne peut être calculé");
+            }
+            
+        } catch (\Throwable $th) {
+           return "Merci de contacter le staff pour la raison suivante : Base de donnée corrompue, ".$th->getMessage();
+        }
+        
+        $différenceDates = $dateActuelle->getTimestamp() - $dateDebutRP->getTimestamp();
+        //appliquer le multiplicateur
+        $dateMultipliée = $différenceDates* $datas[1]["value"];
+        // ajouté le temps fictif
+        $dateModifiée = $dateDebutRP->add(new DateInterval('PT'.$dateMultipliée.'S'));
+        // retourner une date 
+        return "Nous sommes le ".$dateModifiée->format('d/m/Y')." et il est ".$dateModifiée->format('H:i:s');
+     }
 }
