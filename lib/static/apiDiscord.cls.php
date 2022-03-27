@@ -6,7 +6,7 @@ class ApiDiscord
     public static function sendDiscord($method,$url,$post){
         $type = [
             'post' => HTTP_Request2::METHOD_POST,
-            'put' => HTTP_Request2::METHOD_PUT
+            'put' => HTTP_Request2::METHOD_PUT,
         ];
         $methodUse = $type[strtolower($method)];
         if(empty($methodUse)) {return false;}

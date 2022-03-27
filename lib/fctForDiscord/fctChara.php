@@ -114,6 +114,8 @@ class fctChara extends structure {
     {
         //get id lanceur
         global $id;
+        $addXP = 50;
+        $addVoie = 5;
         // get date du jour
         $dateFormatte = date("d/m/Y");
         $response = sql::fetch("SELECT * FROM entrainement WHERE id = '$id' AND jourEntrainement = CURRENT_DATE()");
@@ -128,16 +130,15 @@ class fctChara extends structure {
         foreach (sql::fetchAll("SELECT value FROM ficheData WHERE idPerso='$id' AND label IN('vPrimaire','vSecondaire')") as $r){
             $trainPossible[] = strtolower($r[0]);
         }
-        if(!in_array(strtolower($param),$trainPossible)){
+        $param = strtolower($param);
+        if(!in_array($param,$trainPossible)){
             return _t('train.errorType',implode("\n- ",$trainPossible));
         }
 
 
         $retour = [];
-        $addXP = 50;
         $perso = new perso($id);
         $newXp = $perso->addXp($addXP);
-        var_dump($newXp);
         if($newXp === 'max'){
             $retour[] = _t('train.max');
         }else{
@@ -151,9 +152,13 @@ class fctChara extends structure {
                 $retour[] = _t('train.max');
             }
         }
+        $newSkill = $perso->addXpVoie($addVoie,$param);
+        if(!empty($newSkill)){
+            $retour[] = _t('train.newSkill',implode(',',$newSkill));
+        }
 
 
-        sql::query("INSERT INTO entrainement(id,jourEntrainement) VALUES($id,CURRENT_DATE()) ON DUPLICATE KEY UPDATE id='$id',jourEntrainement=CURRENT_DATE()");
+        sql::query("INSERT INTO entrainement(id,jourEntrainement) VALUES($id,CURRENT_DATE()) ON DUPLICATE KEY UPDATE id='$id'#,jourEntrainement=CURRENT_DATE()");
         return _t('train.return',$dateFormatte,implode('\n',$retour));
     }
 }
