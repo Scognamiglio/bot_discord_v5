@@ -2,7 +2,6 @@
 
 include '/composer/vendor/autoload.php';
 
-$classStatic = ['apiDiscord','tools','sql'];
 foreach (scandir("lib/static") as $cls){
     if(strpos($cls,'.')!==0) {
         include "lib/static/$cls";

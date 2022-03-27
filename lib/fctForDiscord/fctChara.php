@@ -109,4 +109,56 @@ class fctChara extends structure {
 
         sql::query(tools::prepareInsert("action",['perso'=>$user[1],'skill'=>$rs['idSkill'], 'cible'=>$dataCible]));
     }
+
+    public function train($param)
+    {
+        //get id lanceur
+        global $id;
+        $addXP = 50;
+        $addVoie = 5;
+        // get date du jour
+        $dateFormatte = date("d/m/Y");
+        $response = sql::fetch("SELECT * FROM entrainement WHERE id = '$id' AND jourEntrainement = CURRENT_DATE()");
+        if (!empty($response)) {
+            $again = (24-date("h"))." heure(s) et ".(60-date('i'))." minute(s)";
+            return _t('train.again',$again);
+        }
+        if(empty($param)){
+            return $this->help('train');
+        }
+        $trainPossible = [];
+        foreach (sql::fetchAll("SELECT value FROM ficheData WHERE idPerso='$id' AND label IN('vPrimaire','vSecondaire')") as $r){
+            $trainPossible[] = strtolower($r[0]);
+        }
+        $param = strtolower($param);
+        if(!in_array($param,$trainPossible)){
+            return _t('train.errorType',implode("\n- ",$trainPossible));
+        }
+
+
+        $retour = [];
+        $perso = new perso($id);
+        $newXp = $perso->addXp($addXP);
+        if($newXp === 'max'){
+            $retour[] = _t('train.max');
+        }else{
+            if($newXp < $addXP){
+                $retour[] = _t('train.levelUP',$perso->get('niveau'));
+            }
+            $xpForUp = $perso->xpForLevelUp();
+            if($xpForUp){
+                $retour[] = _t('train.againXp',$xpForUp-$newXp);
+            }else{
+                $retour[] = _t('train.max');
+            }
+        }
+        $newSkill = $perso->addXpVoie($addVoie,$param);
+        if(!empty($newSkill)){
+            $retour[] = _t('train.newSkill',implode(',',$newSkill));
+        }
+
+
+        sql::query("INSERT INTO entrainement(id,jourEntrainement) VALUES($id,CURRENT_DATE()) ON DUPLICATE KEY UPDATE id='$id'#,jourEntrainement=CURRENT_DATE()");
+        return _t('train.return',$dateFormatte,implode('\n',$retour));
+    }
 }
