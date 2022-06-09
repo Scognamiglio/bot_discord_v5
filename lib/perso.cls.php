@@ -5,10 +5,11 @@ class perso
 {
     protected $idPerso;
     protected $exist = false;
-    protected $champRecup = ['niveau','xp','VP','VS','nameVP','nameVS'];
+    protected $allVoie = [];
+    protected $champRecup = ['niveau','xp','VP','VS','nameVP','nameVS','pta','ptaTotal'];
     protected $champKey = ['VP','VS'];
     protected $architect = [
-        'fiche' => ['niveau','xp','VP','VS']
+        'fiche' => ['niveau','xp','VP','VS','pta','ptaTotal']
     ];
     protected $niveau;
     protected $xp;
@@ -33,7 +34,7 @@ class perso
 
     // Récupére data importante.
     public function getData(){
-        $perso = sql::fetch("SELECT niveau,xp,VP,VS,vp.value AS nameVP,vs.value AS nameVS
+        $perso = sql::fetch("SELECT niveau,xp,VP,VS,vp.value AS nameVP,vs.value AS nameVS,pta,ptaTotal
             FROM perso p
             INNER JOIN ficheData vp ON p.idPerso=vp.idPerso AND vp.label='vPrimaire'
             INNER JOIN ficheData vs ON p.idPerso=vs.idPerso AND vs.label='vSecondaire'
@@ -115,5 +116,108 @@ class perso
             }
         }
         return $r;
+    }
+
+    public function getAllSkillPerso($beginIdSkill=null){
+        $qry = "SELECT s.idSkill,s.name,s.type,s.description,s.extra,s.cost,sP.id,sP.alias,sP.level FROM perso p
+                    INNER JOIN ficheData fdP USING(idPerso)
+                    INNER JOIN ficheData fdS USING(idPerso)
+                    INNER JOIN skill s
+                    left JOIN skillPerso sP USING(idPerso,idSkill)
+                    WHERE
+                    fdP.label='vPrimaire' AND fdS.label='vSecondaire' AND idPerso='".$this->idPerso."'
+                    AND (
+                    (idSkill LIKE CONCAT(fdP.value,'%') AND SUBSTRING_INDEX(idskill,'-',-1) < vp)
+                    OR
+                    (idSkill LIKE CONCAT(fdS.value,'%') AND SUBSTRING_INDEX(idskill,'-',-1) < vs)
+                    )";
+        if(isset($beginIdSkill) && !empty($beginIdSkill)){
+            $beginIdSkillSplit = explode(" ",$beginIdSkill);
+
+            if(count($beginIdSkillSplit) > 1 || !in_array($beginIdSkillSplit[0],$this->getAllVoie())){
+                $qry .= " AND (idSkill='".implode("-",$beginIdSkillSplit)."' ";
+                $qry .= " OR s.name='$beginIdSkill' OR sP.alias='$beginIdSkill' ";
+                unset($beginIdSkillSplit[0]);
+                if(!empty($beginIdSkillSplit)){
+                    $qry .= " OR s.name='".implode(" ",$beginIdSkillSplit)."' OR sP.alias='".implode(" ",$beginIdSkillSplit)."'";
+                }
+                $qry .= ")";
+            }else{
+                $qry .= " AND idSkill like '$beginIdSkill%'";
+            }
+        }
+        $data = ['already'=>[],'empty'=>[]];
+        foreach (sql::fetchAll($qry) as $value){
+            $line1 = !empty($value['id']) ? 'already' : 'empty';
+            $idSkill = explode("-",$value['idSkill']);
+            if(!empty($value['extra'])){
+                $extra = json_decode($value['extra'],true);
+                $value['extra'] = $extra;
+                if(isset($extra['up']) && !empty($extra['up'] && $value['level'] > 1)){
+                    $value['cost'] = $value['level'] == $extra['up']['max'] ? 'max' : $value['cost']*$value['level'];
+                }
+            }
+            $value['id'] = $idSkill[1];
+
+            $data[$line1][$idSkill[0]][] = $value;
+        }
+        return $data;
+    }
+
+    public function getAllVoie(){
+        if(empty($this->allVoie)){
+            $diffVoie = array_merge(sql::getJsonBdd("select value from botExtra where label='voieE'"),sql::getJsonBdd("select value from botExtra where label='voieP'"));
+            $diffVoie = array_map('strtolower', $diffVoie);
+            $this->allVoie = $diffVoie;
+        }
+        return $this->allVoie;
+    }
+
+    public function aliasSkill($id,$alias){
+        sql::query("update skillPerso set alias='$alias' where idSkill='$id' and idPerso='".$this->idPerso."'");
+        return _t("skill.newAlias",$alias,$id);
+    }
+
+    public function upSkill($id){
+        $qry = "SELECT cost,name,level,extra FROM skill s LEFT JOIN skillPerso sp ON s.idSkill=sp.idSkill AND sp.idPerso='".$this->idPerso."' where s.idSkill='$id'";
+        var_dump($qry);
+        $resultSkill = sql::fetch($qry);
+        var_dump($resultSkill);
+        if(empty($resultSkill['level'])){
+            return $this->levelUpSkill($id,true,$resultSkill);
+        }
+
+        if(empty($resultSkill['extra'])){
+            return _t('skill.max',$resultSkill['name']);
+        }
+
+        $extra = json_decode($resultSkill['extra'],true);
+
+        if(!isset($extra['up']) || $extra['up']['max'] <= $resultSkill['level']){
+            return _t('skill.max',$resultSkill['name']);
+        }
+
+        return $this->levelUpSkill($id,false,$resultSkill);
+    }
+
+    public function levelUpSkill($id,$notExist,$skill){
+        $pta = $this->get('pta');
+        if($pta >= $skill['cost']){
+            if($notExist){
+                $level = 1;
+                sql::query(tools::prepareInsert("skillPerso",[
+                    'idPerso' => $this->idPerso,
+                    'idSkill' => $id,
+                    'level' => $level
+                ]));
+            }else{
+                $level = $skill['level']+1;
+                sql::query("update skillPerso set level=$level where idPerso='".$this->idPerso."' and idSkill='$id'");
+            }
+            $this->update("pta",$pta-$skill['cost']);
+            return _t('skill.upSkill',$skill['name'],$level,$this->get('pta'));
+        }else{
+            return _t('skill.notEnough',$skill['cost']-$pta);
+        }
     }
 }

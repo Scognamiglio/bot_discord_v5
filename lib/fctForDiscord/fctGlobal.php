@@ -188,9 +188,6 @@ class fctGlobal extends structure {
         return $msg;
     }
 
-
-
-
     function newtexte($param){
         $data = $this->_TraitementData($param,['id','texte']);
         if(count($data) != 2){return $this->help("newtexte");}
