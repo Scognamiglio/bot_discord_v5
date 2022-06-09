@@ -188,4 +188,6 @@ class fctAdmin extends structure {
         var_dump(_t($param,'a'));
         var_dump(_t($param,'a','v'));
     }
+
+
 }
