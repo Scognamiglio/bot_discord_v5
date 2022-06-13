@@ -3,6 +3,7 @@
 class structure {
 
     public function _init(){
+        $this->delete = false;
         $this->md = $GLOBALS['md'];
         $this->message = $this->md->get('message');
         $this->id = $this->message['author']['id'];

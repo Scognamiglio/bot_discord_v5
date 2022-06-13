@@ -49,6 +49,9 @@ $discord->on('ready', function ($discord) {
                            $message->channel->sendMessage($retour);
                        }
                    }
+                   if($allObject[$methodToObject[$act]]->delete){
+                       ApiDiscord::deleteMessage();
+                   }
                }
 
            }
