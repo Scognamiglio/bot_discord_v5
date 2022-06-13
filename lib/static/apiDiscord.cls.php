@@ -7,6 +7,9 @@ class ApiDiscord
         $type = [
             'post' => HTTP_Request2::METHOD_POST,
             'put' => HTTP_Request2::METHOD_PUT,
+            'delete' => HTTP_REQUEST2::METHOD_DELETE,
+            'patch' => 'PATCH',
+            'get' => 'GET',
         ];
         $methodUse = $type[strtolower($method)];
         if(empty($methodUse)) {return false;}
@@ -21,7 +24,7 @@ class ApiDiscord
             'content-type' => 'application/json',
             'authorization' => 'Bot '.$GLOBALS['token'][$GLOBALS['Env']],
         ));
-        $request->setBody(json_encode($post));
+        if(!empty($post)){$request->setBody(json_encode($post));}
         $response = $request->send();
         return json_decode($response->getBody(),true);
 
@@ -61,5 +64,38 @@ class ApiDiscord
 
     public static function ChangePerm($pId,$permSet){
         return ApiDiscord::sendDiscord("put","channels/$pId/permissions/{$permSet['id']}",$permSet);
+    }
+
+    public static function sendMessage($msg,$idChannel=null){
+        global $message;
+        $idChannel = $idChannel ?? $message->channel->id;
+        return ApiDiscord::sendDiscord("post","channels/$idChannel/messages",['content'=>$msg]);
+    }
+
+    public static function editMessage($idChannel,$idMessage,$msg){
+        return ApiDiscord::sendDiscord("patch","channels/$idChannel/messages/$idMessage",['content'=>$msg]);
+    }
+
+    public static function deleteMessage($idChannel=null,$idMessage=null){
+        global $message;
+        $idChannel = $idChannel ?? $message->channel->id;
+        $idMessage = $idMessage ?? $message->id;
+        return ApiDiscord::sendDiscord("delete","channels/$idChannel/messages/$idMessage",[]);
+    }
+
+    //TODO Gestion Embed
+    public static function getMessage($idChannel=null,$idMessage=null){
+        global $message;
+        $idChannel = $idChannel ?? $message->channel->id;
+        if(empty($idMessage)){
+            $tabMessage = [];
+            $jsonS = ApiDiscord::sendDiscord("get","channels/$idChannel/messages",[]);
+            foreach ($jsonS as $json){
+                $tabMessage[$json['id']] = $json['content'];
+            }
+            return $tabMessage;
+        }
+        $json = ApiDiscord::sendDiscord("get","channels/$idChannel/messages/$idMessage",[]);
+        return [$json['id'] => $json['content']];
     }
 }
