@@ -189,5 +189,28 @@ class fctAdmin extends structure {
         var_dump(_t($param,'a','v'));
     }
 
+    public function percist($param){
+        $this->delete = true;
+        $id = preg_split( "/[ \n]/", $param )[0];
+        $texte = str_replace("$id","",$param);
+        $already = sql::fetch("select value from botExtra where label='percistMsg-$id'")['value'] ?? false;
 
+        if(empty($texte)){
+            if(!$already){return _t('percist.error',$id);}
+            $dataSplit = explode('|',$already);
+            $msg = ApiDiscord::getMessage($dataSplit[0],$dataSplit[1])[$dataSplit[1]];
+            $msg = str_replace("> **__{$id}__**\n","",$msg);
+            return "```\n$msg```";
+        }
+
+
+        $texte = "> **__{$id}__**\n\n".substr($texte,1);
+        if($already==false){
+            $json = apiDiscord::sendMessage($texte);
+            sql::query("insert into botExtra values('percistMsg-$id','{$json['channel_id']}|{$json['id']}')");
+        }else{
+            $dataSplit = explode('|',$already);
+            apiDiscord::editMessage($dataSplit[0],$dataSplit[1],$texte);
+        }
+    }
 }
