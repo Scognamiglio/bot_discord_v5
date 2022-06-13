@@ -20,22 +20,33 @@ class combat
         }
 
         // skill
-        $result = sql::fetchAll("SELECT extra FROM skillPerso INNER JOIN skill USING (idSkill) WHERE idPerso='$id_perso' AND extra LIKE '%stats%'");
+        $result = sql::fetchAll("SELECT extra FROM skillPerso INNER JOIN skill USING (idSkill) WHERE idPerso='$id_perso' AND type='passif'");
         $statSkill = ['pv' => 0, 'pm' => 0, 'atk' => 0, 'int' => 0];
+        $other = [];
         foreach ($result as $value){
             $json = json_decode($value['extra'],true);
-            foreach ($json['stats'] as $s=>$v){
-                $statSkill[$s] += (strpos($v, "%") ? (explode("%", $v)[0] * $statDefault[$s] / 100) : $v);
+            if(isset($json['stats'])){
+                foreach ($json['stats'] as $s=>$v){
+                    $statSkill[$s] += (strpos($v, "%") ? (explode("%", $v)[0] * $statDefault[$s] / 100) : $v);
+                }
+                unset($json['stats']);
+            }
+
+            if(!empty($json)){
+                foreach ($json as $l=>$v){
+                    $other[$l] = (isset($other[$l]) ? $other[$l] : 0)+$v;
+                }
             }
         }
 
 
         foreach ($statDefault as $k => $v)
         {
-            $statDefault[$k] = ($v + $statSkill[$k]) * $chara['niveau'];
+            $statDefault[$k] = round(($v + $statSkill[$k]) * $chara['niveau']);
         }
 
         // Item ??? ///
+        $statDefault['other'] = $other;
         return $statDefault;
 
     }
@@ -89,7 +100,14 @@ class combat
             return $pvRestants;
         }
         return false;
+    }
 
+    public function processDegat($degat, $cible){
+        $stat = $this->getStat($cible);
+        if(!empty($stat['other']['protec'])){$degat = $degat * (1-$stat['other']['protec']/100);}
+
+        // Attr + stuff + buff
+        $this->degat($degat,$cible);
     }
 
     // Début combat
@@ -124,23 +142,39 @@ class combat
 
     }
 
+    public function effectifAtk ($user,$pui,$data){
+        $passif = $user['stats']['other'];
+
+        // Passif de voie.
+        $checkV = ['voie','typeVoie'];
+        foreach ($checkV as $v){
+            if(!empty($passif[$data[$v]])) { $pui += $pui * $passif[$data[$v]] / 100;}
+        }
+        // Buff
+        return $pui;
+    }
+
     public function useSkill($user,$pui){
         $idAct = array_keys($user['actions'])[0];
         $act = $user['actions'][$idAct];
-        $extra = sql::getJsonBdd("select extra from skill where idSkill='{$act[0]}'");
+        $result = sql::fetch("SELECT extra,label as typeVoie,SUBSTRING_INDEX(idSkill, '-',1) AS voie FROM skill s LEFT JOIN botExtra be ON be.value LIKE CONCAT('%\"',SUBSTRING_INDEX(idSkill, '-',1),'\"%') AND label IN ('voieE','voieA') WHERE s.idSkill='{$act[0]}'");
+        $passif = $user['stats']['other'];
+        $data = ['typeVoie'=>$result['typeVoie'],'voie' => $result['voie']];
+        $pui = $this->effectifAtk($user,$pui,$data);
+
+        $extra = json_decode($result['extra'],true);
         // Applique l'action pour chaque cible
         $already = [];
         foreach (explode(",",$act[1]) as $cible){
             // Foreach pour gérer les actions dans le bon ordre.
             foreach ($extra as $label=>$value){
                 $label = strtolower($label);
-                // Si déjà exécuté et ne doit pas être relancer.
+                // Si déjà exécuté et ne doit pas être relancé.
                 if(isset($already[$label]) && $already[$label]){continue;}
 
-                if(in_array($label,['heal','dmg'])){
-                    $tmp = round($pui*$value*($label=='dmg' ? 1 : -1));
-                    $this->degat($tmp,$cible);
-                }
+                if($label == "dmg"){$this->processDegat($pui*$value,$cible);}
+                if($label == "heal"){$this->degat($pui*$value*-1,$cible);}
+
 
                 if($label == "selfheal"){
                     $this->degat(round(-1*$value*$pui),$user['name']);
@@ -149,9 +183,7 @@ class combat
             }
 
         }
-        sql::query("update action set already=1 where id='$idAct'");
+        sql::query("update action set already=1 where id='$idAct' AND 1!=(SELECT VALUE FROM botExtra WHERE label='testSkill')");
     }
 
 }
-
-
