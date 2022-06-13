@@ -107,8 +107,6 @@ class fctAdmin extends structure {
         global $cb;
         if (empty($param)) {
             $msg = $cb->getStatsAll();
-            //var_dump($msg);
-            //var_dump(array_key_last($msg));
             $equipe = "";
             $vivants = "";
             $ko = "";
@@ -116,18 +114,8 @@ class fctAdmin extends structure {
             $curseur = array_keys($msg);
             $i = 0;
             foreach ($msg as $element) {
-                # code...
-            //for ($i = 0, $l = count($msg); $i < $l; $i++) {
                 $equipe .= "\n**<Equipe ".($curseur[$i]+1). " >**\n\n";
                 $i++;
-                var_dump($equipe);
-
-                /* if ($msg[$i] === null) {
-                    var_dump("valeur inexistante");
-                } else {
-                   var_dump($msg[$i]);   
-                } */
-              
                 foreach ($element as $key => $value) {
                     ($value['pv'] > 0) ?
                         $vivants .= "<" . ucfirst($key) . "> [" . $value['pv'] . " PV]" . "[" . $value['pm'] . " PM]\n"

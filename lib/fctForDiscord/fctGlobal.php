@@ -252,8 +252,7 @@ class fctGlobal extends structure {
         if ($dateDebutRP>$dateActuelle||$datas['joursRpParJourIRL']> 10000||$datas['joursRpParJourIRL']<=0) {
             return (_t('global.error')." "._t('global.baseCorrompue')." "._t("daterp.limiteTech"));
         }
-        // calculer la différence entre date actuelle et jour du début du RP : en seconde
-        
+        // calculer la différence entre date actuelle et jour du début du RP : en seconde        
         $différenceDates = $dateActuelle->getTimestamp() - $dateDebutRP->getTimestamp();
         //appliquer le multiplicateur et ajouter le temps fictif
         $dateMultipliée = $différenceDates* $datas['joursRpParJourIRL'];        
