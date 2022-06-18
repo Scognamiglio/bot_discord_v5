@@ -1,0 +1,3 @@
+une possibilité de rendre muet une cible et a& voir a étendre a l'auto suppression de toutm essage n'étant pas en hrp ou en pensée ( ** et hrp) 
+ajout fonction decompte parametre dans structure pour generaliser le message d'erreur et faire une verification systématique
+mettre tout les parametre en bdd(limite de caractère, valeur des skills)> ca va multiplier le nombre de requetes donc a vor si c'est viable

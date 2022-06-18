@@ -1,0 +1,98 @@
+@startuml
+title "Vue ensemble BDD Astrem V5"
+hide circle
+class botExtra {
+    label varchar 50
+    value text
+}
+
+class combat {
+    name varchar 50 unique
+    pv int 11
+    pm int 11
+    team int 11
+    level float notNull
+}
+
+class exec {
+    id int 11 Primary notNull
+    action varchar 50
+    param text
+    horodate Timestamp NotNull
+    isExec Binary
+}
+class ficheData {
+    idPerso varchar 50 notNull
+    label varchar 50 notNull
+    value text
+    dateInsert Timestamp
+}
+class help {
+    idHelp varchar 50 NotNull
+    Author varchar 50
+    texte text
+}
+class hook {
+    idCanal varchar 50 NotNull
+    token varchar 150
+    idHook varchar 50
+}
+class login {
+    idLogin varchar 50
+    ip varchar 50
+    idPerso varchar 50
+    expire Timestamp
+}
+
+class mob {
+    name varchar 50 Primary notNull
+    pv int 11
+    pm int 11
+    atk int 11
+    descr text
+    img varchar 100
+}
+class perso {
+    idPerso varchar 50 Primary notNull
+    race varchar 50
+    prenom varchar 50
+    sexe varchar 50
+    age int 11
+    niveau int 11
+    xp int 11
+    avatar varchar 100
+}
+
+class persoClasse {
+    idPerso varchar 50
+    classe varchar 50
+    stat varchar 50
+    arme varchar 50
+    element varchar 50
+    armeLevel int 11
+    elementLevel int 11
+}
+class pnj {
+    alias varchar 50 notNull
+    name varchar 50 notNull
+    img varchar 150
+    who varchar 50 notNull
+}
+class site {
+    idPerso varchar 20 notNull
+    login varchar 50
+    password varchar 50
+    state int 11
+}
+class skill {
+    idSkill varchar 50 Primary
+    type varchar 50
+    name varchar 50
+    description text
+    extra varchar 200
+
+}
+legend
+    collation : latin1_swedish_ci
+end legend
+@enduml
