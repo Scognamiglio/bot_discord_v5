@@ -3,6 +3,7 @@
 class structure {
 
     public function _init(){
+        $this->delete = false;
         $this->md = $GLOBALS['md'];
         $this->message = $this->md->get('message');
         $this->id = $this->message['author']['id'];
@@ -13,8 +14,16 @@ class structure {
 
     public function _TraitementData($data,$struct){
         $retour = [];
-        if(strpos($data,"-".$struct[0])!==false){
-            $regex = "/-(".implode('|',$struct).') ((?:(?! -'.implode('| -',$struct).').)*)/s';
+        $isParamLinux = false;
+        foreach ($struct as $check){
+            if(strpos(strtolower($data),"-".$check)!==false){
+                $isParamLinux = true;
+                break;
+            }
+        }
+
+        if($isParamLinux){
+            $regex = "/-(".implode('|',$struct).') ?((?:(?! -'.implode('| -',$struct).').)*)/is';
             preg_match_all($regex,$data,$array);
             foreach ($array[0] as $i=>$t)
                 $retour[$array[1][$i]] = $array[2][$i];
