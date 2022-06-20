@@ -1,7 +1,6 @@
 <?php
 // Créateur Scognamiglio Loïc.
 include "asset/common.php";
-
 use Discord\Discord;
 use Discord\WebSockets\Intents;
 $discord = new Discord([
@@ -37,7 +36,7 @@ $discord->on('ready', function ($discord) {
                global $methodToObject,$allObject;
                preg_match_all("/!([^ ]*) ?(.*)?/s",$message->content,$array);
 
-               $act = strtolower($array[1][0]);
+               $act = tools::alias(strtolower($array[1][0]));
 
                if(isset($methodToObject[$act])){
                    // Check
@@ -85,3 +84,4 @@ $discord->run();
 if($_SESSION['continue']){
     echo "newRun";
 }
+
