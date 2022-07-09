@@ -1,10 +1,9 @@
 <?php
 use Discord\Builders\MessageBuilder;
-
+$json;
 class fctGlobal extends structure {
 
-    public function __construct()
- {
+    public function __construct() {
         $this->required = '';
     }
 
@@ -198,34 +197,61 @@ class fctGlobal extends structure {
         return $msg;
     }
   
-      public function daterp()
- {
-        /*récupérer les valeurs suivantes
-        - jour de début du RP, valeur IRL car on va utiliser la date reelle pour le calcul on evite une conversion supplementaire de IRL vers fictif
-        - vitesse d'écoulement pour un jour IRL (1 = 1 jour/jour IRL, 0.5 = 0,5 jour pour 1 IRL)
-        */
-        $rawDatas = sql::fetchAll("SELECT label,value FROM botExtra WHERE label in ('baseJourIRL','joursRpParJourIRL')");
-        foreach ($rawDatas as $key) {
-           $datas[$key['label']]=$key['value'];
+      public function daterp($params){
+        global $json;
+        $datedebutIRL = "baseJourIRL"; $mutiplicateur = "joursRpParJourIRL"; $dateRP = "dateRP";
+        $json = (empty($json)) ? sql::getJsonBdd("SELECT value FROM botExtra WHERE label = 'daterp'") : $json ;
+        $now = new DateTime('now');
+        $intervalle =(new DateTime($json[$datedebutIRL]))->diff($now);
+        $dateRPnew =  (new DateTime($json[$dateRP]))->add(new DateInterval("P".(int)floor(($intervalle->days)* $json[$mutiplicateur])."D"));
+        $paramsArray = explode(" ",$params);
+        $isAnUpdate = false;
+        switch ($paramsArray[0]) {
+            case 'set':
+                if (!$this->isAdmin) {
+                    return (_t("global.notAdmin"));
+                }
+                $analysedate = explode("-",$paramsArray[1]);
+                foreach ($analysedate as $part) {
+                    if (!ctype_digit($part)) {
+                        return (_t(__FUNCTION__.".argumentIncorrect"));
+                    }
+                }
+                if(count($analysedate)!=3){
+                    return (_t(__FUNCTION__.".argumentIncorrect"));
+                }                
+                $clemessage = "set";
+                $json[$datedebutIRL] = ($now)->format("Y-m-d");
+                $json[$dateRP] = $paramsArray[1];
+                $contenu = (new DateTime($json[$dateRP]))->format('d/m/Y');
+                $isAnUpdate = true;
+                break;
+            case 'x':
+                if (!$this->isAdmin) {
+                    return (_t("global.notAdmin"));
+                }
+                if (!is_numeric($paramsArray[1])) {
+                    return (_t(__FUNCTION__.".argumentIncorrect"));
+                }
+                if ($paramsArray[1]>999||$paramsArray[1]<=0) {
+                    return (_t(__FUNCTION__.".limiteTech"));
+                }                    
+                $clemessage = "x"; 
+                $json[$datedebutIRL] = ($now)->format("Y-m-d");
+                $json[$dateRP] = $dateRPnew->format("Y-m-d");
+                $json[$mutiplicateur] = $paramsArray[1];
+                $contenu =$json[$mutiplicateur]; 
+                $isAnUpdate = true;
+                break;
+            default :
+                $clemessage = "success";
+                $contenu = $dateRPnew->format('d/m/Y');
+                break;
         }
-       //gestion des valeurs interdites
-        if (!strtotime($datas['baseJourIRL'])||!is_numeric($datas['joursRpParJourIRL'])) {
-            return (_t('global.error')." "._t('global.baseCorrompue')." "._t("daterp.calculImpossible"));
-        }
-        //création des objets dates
-        $dateDebutRP = new DateTime($datas['baseJourIRL']);
-        $dateActuelle = new DateTime('now'); 
-        if ($dateDebutRP>$dateActuelle||$datas['joursRpParJourIRL']> 10000||$datas['joursRpParJourIRL']<=0) {
-            return (_t('global.error')." "._t('global.baseCorrompue')." "._t("daterp.limiteTech"));
-        }
-        // calculer la différence entre date actuelle et jour du début du RP : en seconde        
-        $différenceDates = $dateActuelle->getTimestamp() - $dateDebutRP->getTimestamp();
-        //appliquer le multiplicateur et ajouter le temps fictif
-        $dateMultipliée = $différenceDates* $datas['joursRpParJourIRL'];        
-        $dateModifiée = $dateDebutRP->add(new DateInterval('PT'.$dateMultipliée.'S'));
-        // retourner une date
-        return (_t('daterp.success',$dateModifiée->format('d/m/Y'),$dateModifiée->format('H:i:s' ) ) );
-}
+        ($isAnUpdate) ?  sql::query("UPDATE botExtra SET VALUE ='".json_encode(($json))."'WHERE label = 'daterp'") : NULL;
+        return (_t(__FUNCTION__.'.'.$clemessage,$contenu));
+    }
+
       function newtexte($param){
         $data = $this->_TraitementData($param,['id','texte']);
         if(count($data) != 2){return $this->help("newtexte");}
