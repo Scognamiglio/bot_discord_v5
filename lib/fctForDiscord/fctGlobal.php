@@ -89,8 +89,8 @@ class fctGlobal extends structure {
                     }
                 }
             } else {
-                $jsonDateRP = sql::getJsonBdd( "select value from botExtra where label='{$steps[$step]['param']}'" );
-                $dataTab = array_keys( $jsonDateRP );
+                $json = sql::getJsonBdd( "select value from botExtra where label='{$steps[$step]['param']}'" );
+                $dataTab = array_keys( $json );
             }
             $out = [];
             foreach ( $dataTab as $d ) {
