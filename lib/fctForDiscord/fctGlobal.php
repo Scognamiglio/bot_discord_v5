@@ -1,6 +1,6 @@
 <?php
 use Discord\Builders\MessageBuilder;
-$json;
+
 class fctGlobal extends structure {
 
     public function __construct() {
@@ -89,8 +89,8 @@ class fctGlobal extends structure {
                     }
                 }
             } else {
-                $json = sql::getJsonBdd( "select value from botExtra where label='{$steps[$step]['param']}'" );
-                $dataTab = array_keys( $json );
+                $jsonDateRP = sql::getJsonBdd( "select value from botExtra where label='{$steps[$step]['param']}'" );
+                $dataTab = array_keys( $jsonDateRP );
             }
             $out = [];
             foreach ( $dataTab as $d ) {
@@ -196,21 +196,20 @@ class fctGlobal extends structure {
         $msg .= '```\n'._t( 'dataFiche.exemple' );
         return $msg;
     }
-  
-      public function daterp($params){
-        global $json;
+    public function daterp($params){
+        global $jsonDateRP;
         $datedebutIRL = "baseJourIRL"; $mutiplicateur = "joursRpParJourIRL"; $dateRP = "dateRP";
-        $json = (empty($json)) ? sql::getJsonBdd("SELECT value FROM botExtra WHERE label = 'daterp'") : $json ;
+        $jsonDateRP = (empty($jsonDateRP)) ? sql::getJsonBdd("SELECT value FROM botExtra WHERE label = 'daterp'") : $jsonDateRP ;
         $now = new DateTime('now');
-        $intervalle =(new DateTime($json[$datedebutIRL]))->diff($now);
-        $dateRPnew =  (new DateTime($json[$dateRP]))->add(new DateInterval("P".(int)floor(($intervalle->days)* $json[$mutiplicateur])."D"));
+        $intervalle =(new DateTime($jsonDateRP[$datedebutIRL]))->diff($now);
+        $dateRPnew =  (new DateTime($jsonDateRP[$dateRP]))->add(new DateInterval("P".(int)floor(($intervalle->days)* $jsonDateRP[$mutiplicateur])."D"));
         $paramsArray = explode(" ",$params);
-        $isAnUpdate = false;
+        $isAnUpdate = in_array($paramsArray[0],['set','x']);
+        if($isAnUpdate  && !$this->isAdmin){
+                return _t("global.notAdmin");
+        }
         switch ($paramsArray[0]) {
             case 'set':
-                if (!$this->isAdmin) {
-                    return (_t("global.notAdmin"));
-                }
                 $analysedate = explode("-",$paramsArray[1]);
                 foreach ($analysedate as $part) {
                     if (!ctype_digit($part)) {
@@ -220,16 +219,11 @@ class fctGlobal extends structure {
                 if(count($analysedate)!=3){
                     return (_t(__FUNCTION__.".argumentIncorrect"));
                 }                
-                $clemessage = "set";
-                $json[$datedebutIRL] = ($now)->format("Y-m-d");
-                $json[$dateRP] = $paramsArray[1];
-                $contenu = (new DateTime($json[$dateRP]))->format('d/m/Y');
-                $isAnUpdate = true;
+                $jsonDateRP[$datedebutIRL] = ($now)->format("Y-m-d");
+                $jsonDateRP[$dateRP] = $paramsArray[1];
+                $contenu = (new DateTime($jsonDateRP[$dateRP]))->format('d/m/Y');
                 break;
             case 'x':
-                if (!$this->isAdmin) {
-                    return (_t("global.notAdmin"));
-                }
                 if (!is_numeric($paramsArray[1])) {
                     return (_t(__FUNCTION__.".argumentIncorrect"));
                 }
@@ -237,19 +231,18 @@ class fctGlobal extends structure {
                     return (_t(__FUNCTION__.".limiteTech"));
                 }                    
                 $clemessage = "x"; 
-                $json[$datedebutIRL] = ($now)->format("Y-m-d");
-                $json[$dateRP] = $dateRPnew->format("Y-m-d");
-                $json[$mutiplicateur] = $paramsArray[1];
-                $contenu =$json[$mutiplicateur]; 
-                $isAnUpdate = true;
+                $jsonDateRP[$datedebutIRL] = ($now)->format("Y-m-d");
+                $jsonDateRP[$dateRP] = $dateRPnew->format("Y-m-d");
+                $jsonDateRP[$mutiplicateur] = $paramsArray[1];
+                $contenu =$jsonDateRP[$mutiplicateur]; 
                 break;
             default :
                 $clemessage = "success";
                 $contenu = $dateRPnew->format('d/m/Y');
                 break;
         }
-        ($isAnUpdate) ?  sql::query("UPDATE botExtra SET VALUE ='".json_encode(($json))."'WHERE label = 'daterp'") : NULL;
-        return (_t(__FUNCTION__.'.'.$clemessage,$contenu));
+        ($isAnUpdate) ?  sql::query("UPDATE botExtra SET VALUE ='".json_encode(($jsonDateRP))."'WHERE label = 'daterp'") : NULL;
+        return (_t(__FUNCTION__.'.'.($isAnUpdate  ? $paramsArray[0] : 'success'),$contenu));
     }
 
       function newtexte($param){
