@@ -39,17 +39,16 @@ class structure {
 
     public function __invoke($argument)
     {
-        global $md;
         $this->_init();
         $error = "";
         switch ($this->required) {
             case "fiche":
                 if(empty(sql::fetch("select 1 from perso where idPerso='{$this->id}'")))
-                    $error = "Commande nécéssitant une fiche";
+                    $error = _t("global.notWithFiche");
                 break;
             case "admin":
-                if(!$md->isAdmin())
-                    $error = "Commande nécéssitant d'être admin";
+                if(!$this->isAdmin)
+                    $error = _t("global.notAdmin");
                 break;
         }
         if(!empty($error)){
@@ -66,16 +65,24 @@ class structure {
     public function help($param){
 
         if(empty($param)){
-            $qry = "select idHelp from help";
-            $result = sql::fetchAll($qry);
-            $msg = "fonction avec une aide connu : ";
+            
+            //repetition des lignes présente dans tools dans alias a généraliser : dans tools ? 
+            global $tab;
+            if (empty($tab)) {
+                foreach (sql::fetchAll("SELECT * from alias") as $ligne ) {
+                    $tab[$ligne["original"]] = array_map("trim",explode(",",$ligne["autres"])) ;
+                }            
+            } 
+
+            $result = sql::fetchAll( "SELECT idHelp from help");
+            $msg= _t("help.listHead");
             foreach ($result as $r){
-                $msg.="\n".$r['idHelp'];
+                $msg.="\n".$r['idHelp']." (".((!empty($tab[$r['idHelp']])) ? implode(", ",$tab[$r['idHelp']]) : _t("global.withoutAlias")).")";
             }
             return $msg;
         }
 
-        $qry = "select author,texte from help where idHelp='$param'";
+        $qry = "SELECT author,texte from help where idHelp='$param'";
         $result = sql::fetch($qry);
 
         if(!empty($result)){
@@ -85,7 +92,7 @@ class structure {
             $embed['Color'] = "0x4BFFEF";
             return $embed;
         }
-        return "Aucune aide écrite pour la commande.";
+        return (_t("help.notExistingHelp"));
     }
 
     public function _cleanHelp($descr){
