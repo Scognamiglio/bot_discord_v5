@@ -10,14 +10,17 @@ class fctChara extends structure {
 
     public function fiche($param){
         global $cb;
-
-        $chara = sql::fetch("SELECT prenom,avatar,niveau,xp,race,sexe,fd1.value as vpn,vp,fd2.value as vsn,vs FROM perso p left JOIN ficheData fd1 ON p.idPerso=fd1.idPerso AND fd1.label='vPrimaire' left JOIN ficheData fd2 ON p.idPerso=fd2.idPerso AND fd2.label='vSecondaire' WHERE p.idPerso='{$this->id}'");
         $stats = $cb->getStatsChar();
+        $perso = new perso($this->id);
+        $texteVoie = '';
+        foreach ($perso->get('voies') as $v=>$xp){
+            $texteVoie.="**$v** : $xp\n";
+        }
         $sqlt = [
-            'Author' => $chara['prenom'],
-            'Thumbnail' => $chara['avatar'],
-            'Title' => _t('fiche.niveau')." : {$chara['niveau']}\n",
-            "Description" => "> **__"._t('fiche.info')."__**\n\n**"._t('fiche.xp')."** : {$chara['xp']}/1200\n**"._t('fiche.race')."** : {$chara['race']}\n**"._t('fiche.sexe')."** : {$chara['sexe']}\n\n> __**"._t('fiche.voie')."**__\n\n**"._t('fiche.vP')."** : {$chara['vpn']} (niv. {$chara['vp']})\n**"._t('fiche.vS')."** : {$chara['vsn']} (niv. {$chara['vs']})\n\n> **__"._t('fiche.stats')."__**",
+            'Author' => $perso->get('prenom'),
+            'Thumbnail' => $perso->get('avatar'),
+            'Title' => _t('fiche.niveau')." : {$perso->get('niveau')}\n",
+            "Description" => "> **__"._t('fiche.info')."__**\n\n**"._t('fiche.xp')."** : {$perso->get('xp')}/1200\n**"._t('fiche.race')."** : {$perso->get('race')}\n**"._t('fiche.sexe')."** : {$perso->get('sexe')}\n\n> __**"._t('fiche.voie')."**__\n\n$texteVoie\n\n> **__"._t('fiche.stats')."__**",
             "FieldValues" => [
                 ["PV : {$stats['pv']}", "**ATK : {$stats['atk']}**","inline"],
                 ["PM : {$stats['pm']}", "**INT : {$stats['int']}**","inline"]
