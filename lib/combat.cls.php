@@ -42,7 +42,7 @@ class combat
 
         foreach ($statDefault as $k => $v)
         {
-            $statDefault[$k] = round(($v + $statSkill[$k]) * $chara['niveau']);
+            $statDefault[$k] = round(($v + $statSkill[$k]) * (1 + ($chara['niveau'] * 0.4)));
         }
 
         // Item ??? ///
