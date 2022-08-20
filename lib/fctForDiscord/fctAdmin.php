@@ -201,44 +201,4 @@ class fctAdmin extends structure {
             apiDiscord::editMessage($dataSplit[0],$dataSplit[1],$texte);
         }
     }
-    public function cleaner($params)
-    {
-        global $message;
-        $messages = ApiDiscord::sendDiscord("get","channels/".$message->channel->id."/messages",[]);
-        $count = 0;
-        if ($params != NULL) {
-            $datas = explode(" ",$params);
-            foreach ($messages as $ligne) {
-                $isConcern = false;
-                if (ctype_digit($datas[0])) {
-                    $isConcern = ($ligne["id"] >= $params);
-                }
-                elseif ($datas[0]==="hrp") {
-                    $isConcern = str_contains($ligne["content"],"hrp")||str_contains($ligne["content"],"(");
-                }
-       
-                if ($isConcern) {
-                    ApiDiscord::deleteMessage($ligne["channel_id"],$ligne["id"]);
-                    $count+=1;
-                    sleep(1);
-                }                   
-            }
-          
-       }
-       //var_dump($message);
-        return $count." message(s) ont été supprimés par ".$message["author"]["username"];
-    }
-
-    public function spam($param)
-    {
-        for ($i=0; $i < $param; $i++) { 
-           $random = mt_rand(0,1);
-           if ($random > 0.2) {
-            ApiDiscord::sendMessage("message classique");
-           } else {
-            ApiDiscord::sendMessage("hrp message hrp");
-           }
-           sleep(1);           
-        }
-    }
 }
