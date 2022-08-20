@@ -6,15 +6,15 @@ class perso
     protected $idPerso;
     protected $exist = false;
     protected $allVoie = [];
-    protected $champRecup = ['niveau','xp','VP','VS','nameVP','nameVS','pta','ptaTotal'];
-    protected $champKey = ['VP','VS'];
+    protected $champRecup = ['niveau','xp','pSkill','pSkillTotal','pLatent'];
     protected $architect = [
-        'fiche' => ['niveau','xp','VP','VS','pta','ptaTotal']
+        'fiche' => ['idPerso','race','prenom','sexe','age','niveau','xp','avatar','stats','pSkill','pSkillTotal','pLatent']
     ];
     protected $niveau;
     protected $xp;
     public function __construct($idPerso)
     {
+        $this->champRecup = array_merge($this->architect['fiche']); // En prévision de plusieurs sources potentiel.
         $this->idPerso = $idPerso;
         $this->getData();
     }
@@ -34,11 +34,8 @@ class perso
 
     // Récupére data importante.
     public function getData(){
-        $perso = sql::fetch("SELECT niveau,xp,VP,VS,vp.value AS nameVP,vs.value AS nameVS,pta,ptaTotal
-            FROM perso p
-            INNER JOIN ficheData vp ON p.idPerso=vp.idPerso AND vp.label='vPrimaire'
-            INNER JOIN ficheData vs ON p.idPerso=vs.idPerso AND vs.label='vSecondaire'
-            WHERE p.idperso='".$this->idPerso."'");
+        // Stat défaut
+        $perso = sql::fetch("SELECT ".implode(",",$this->architect['fiche'])." FROM perso WHERE idperso='".$this->idPerso."'");
         if(empty($perso)){
             $this->exist = false;
             return;
@@ -47,6 +44,16 @@ class perso
         foreach ($this->champRecup as $champ){
             $this->set($champ,$perso[$champ]);
         }
+
+        $idSkills = sql::fetchAll("SELECT SUBSTRING_INDEX(sp.idSkill,'-',1) AS voie,sum(cost*level) as cost FROM skillPerso sp INNER JOIN skill s ON sp.idSkill=s.idSkill WHERE idPerso='".$this->idPerso."' and sp.idSkill NOT LIKE 'racial%' AND sp.idSkill NOT LIKE 'natif%' GROUP BY voie");
+        $voies = [];
+        foreach ($idSkills as $idSkill){
+            if($idSkill['cost'] == 0){
+                continue;
+            }
+            $voies[$idSkill['voie']] = $idSkill['cost'] + ($voies[$idSkill['voie']] ?? 0);
+        }
+        $this->set('voies',$voies);
     }
 
     public function levelUPChar($newLevel){
@@ -60,7 +67,7 @@ class perso
         if($this->get('niveau') >= 5){
             return false;
         }
-        return 50 * pow(2,$this->get('niveau'));
+        return 5 * pow(2,$this->get('niveau'));
     }
 
 
@@ -79,28 +86,12 @@ class perso
             $newXp -=$xpLevel;
         }
         $this->update('xp',$newXp);
+        $this->update('pSkill',$this->get('pSkill') + $xp);
+        $this->update('pSkillTotal',$this->get('pSkillTotal') + $xp);
+        $this->update('pLatent',$this->get('pLatent') + ($xp*2));
         return $newXp;
     }
 
-    public function addXpVoie($xp,$voie){
-        $r = $this->parseAllData();
-        $key = null;
-        foreach ($this->champKey as $champ){
-            if(isset($r[$champ][$voie])){
-                $key = $champ;
-                break;
-            }
-        }
-        $oldXp = $this->get($key);
-        $newXp = round($oldXp + $xp * ($key == "VP" ? 1.5 : 1));
-        $this->update($key,$newXp);
-        $qryGetNewSkill = "SELECT name FROM skill WHERE SUBSTRING_INDEX(idskill,'-',-1) > $oldXp AND SUBSTRING_INDEX(idskill,'-',-1) < $newXp AND idskill LIKE '$voie-%'";
-        $return = [];
-        foreach (sql::fetchAll($qryGetNewSkill) as $value){
-            $return[] = $value['name'];
-        }
-        return $return;
-    }
 
     public function parseAllData(){
         $c = $this->champRecup;
@@ -109,33 +100,23 @@ class perso
         });
         $r = [];
         foreach ($c as $champ){
-            if(in_array($champ,$this->champKey)){
-                $r[$champ][strtolower($this->get("name$champ"))] = $this->get($champ);
-            }else{
-                $r[$champ] = $this->get($champ);
-            }
+            $r[$champ] = $this->get($champ);
         }
         return $r;
     }
 
     public function getAllSkillPerso($beginIdSkill=null){
-        $qry = "SELECT s.idSkill,s.name,s.type,s.description,s.extra,s.cost,sP.id,sP.alias,sP.level FROM perso p
-                    INNER JOIN ficheData fdP USING(idPerso)
-                    INNER JOIN ficheData fdS USING(idPerso)
-                    INNER JOIN skill s
-                    left JOIN skillPerso sP USING(idPerso,idSkill)
-                    WHERE
-                    fdP.label='vPrimaire' AND fdS.label='vSecondaire' AND idPerso='".$this->idPerso."'
-                    AND (
-                    (idSkill LIKE CONCAT(fdP.value,'%') AND SUBSTRING_INDEX(idskill,'-',-1) < vp)
-                    OR
-                    (idSkill LIKE CONCAT(fdS.value,'%') AND SUBSTRING_INDEX(idskill,'-',-1) < vs)
-                    )";
+        $qry ="select s.idSkill,s.name,s.type,s.description,s.extra,s.cost,sP.id,sP.alias,sP.level from skill s left JOIN skillPerso sP on s.idSkill=sP.idSkill and idPerso='".$this->idPerso."' where ";
+        $qryParts = [];
+        foreach ($this->get('voies') as $voie=>$ptn){
+            $qryParts[]= "(s.idSkill LIKE '$voie-%' AND SUBSTRING_INDEX(s.idskill,'-',-1) <= $ptn) ";
+        }
+        $qry .= " (".implode(" OR ",$qryParts).")";
         if(isset($beginIdSkill) && !empty($beginIdSkill)){
             $beginIdSkillSplit = explode(" ",$beginIdSkill);
 
             if(count($beginIdSkillSplit) > 1 || !in_array($beginIdSkillSplit[0],$this->getAllVoie())){
-                $qry .= " AND (idSkill='".implode("-",$beginIdSkillSplit)."' ";
+                $qry .= " AND (s.idSkill='".implode("-",$beginIdSkillSplit)."' ";
                 $qry .= " OR s.name='$beginIdSkill' OR sP.alias='$beginIdSkill' ";
                 unset($beginIdSkillSplit[0]);
                 if(!empty($beginIdSkillSplit)){
@@ -143,7 +124,7 @@ class perso
                 }
                 $qry .= ")";
             }else{
-                $qry .= " AND idSkill like '$beginIdSkill%'";
+                $qry .= " AND s.idSkill like '$beginIdSkill%'";
             }
         }
         $data = ['already'=>[],'empty'=>[]];
@@ -180,9 +161,7 @@ class perso
 
     public function upSkill($id){
         $qry = "SELECT cost,name,level,extra FROM skill s LEFT JOIN skillPerso sp ON s.idSkill=sp.idSkill AND sp.idPerso='".$this->idPerso."' where s.idSkill='$id'";
-        var_dump($qry);
         $resultSkill = sql::fetch($qry);
-        var_dump($resultSkill);
         if(empty($resultSkill['level'])){
             return $this->levelUpSkill($id,true,$resultSkill);
         }
@@ -201,8 +180,8 @@ class perso
     }
 
     public function levelUpSkill($id,$notExist,$skill){
-        $pta = $this->get('pta');
-        if($pta >= $skill['cost']){
+        $pSkill = $this->get('pSkill');
+        if($pSkill >= $skill['cost']){
             if($notExist){
                 $level = 1;
                 sql::query(tools::prepareInsert("skillPerso",[
@@ -214,10 +193,10 @@ class perso
                 $level = $skill['level']+1;
                 sql::query("update skillPerso set level=$level where idPerso='".$this->idPerso."' and idSkill='$id'");
             }
-            $this->update("pta",$pta-$skill['cost']);
-            return _t('skill.upSkill',$skill['name'],$level,$this->get('pta'));
+            $this->update("pSkill",$pSkill-$skill['cost']);
+            return _t('skill.upSkill',$skill['name'],$level,$this->get('pSkill'));
         }else{
-            return _t('skill.notEnough',$skill['cost']-$pta);
+            return _t('skill.notEnough',$skill['cost']-$pSkill);
         }
     }
 }
