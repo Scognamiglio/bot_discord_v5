@@ -204,33 +204,37 @@ class fctAdmin extends structure {
     public function cleaner($params)
     {
         global $message;
-        $messages = ApiDiscord::sendDiscord("get","channels/".$message->channel->id."/messages",[]);
+        $messages = ApiDiscord::getMessage();;
         $count = 0;
         if ($params != NULL) {
-            $datas = explode(" ",$params);
-            foreach ($messages as $ligne) {
+            // recuperer les arguments donnés
+            $args=array();
+            $paramsArray =explode(" ",$params);
+            foreach ($paramsArray as $param) {
+                $args[] = $param =="hrp" ? "hrp" : (ctype_digit($param)==true ? "id": "Not Significant" );
+            }
+            $idLimit = array_search("id",$args);
+            $isHrp = array_search("hrp",$args);
+            foreach ($messages as $id => $contenu) {          
+                //supprimer tout les message apres le message donné            
                 $isConcern = false;
-                if (ctype_digit($datas[0])) {
-                    $isConcern = ($ligne["id"] >= $params);
-                }
-                elseif ($datas[0]==="hrp") {
-                    $isConcern = str_contains($ligne["content"],"hrp")||str_contains($ligne["content"],"(");
-                }
-       
+                $isConcern = gettype($idLimit)=="integer" ? ($id >= (int)$paramsArray[$idLimit]) : $isConcern;
+                $isConcern = gettype($isHrp)=="integer" ? preg_match('/^(\(.*\)|hrp.*)$/',$contenu) : $isConcern;
                 if ($isConcern) {
-                    ApiDiscord::deleteMessage($ligne["channel_id"],$ligne["id"]);
+                    ApiDiscord::deleteMessage($message["channel_id"],$id);
                     $count+=1;
                     sleep(1);
                 }                   
-            }
-          
+            }    
        }
-       //var_dump($message);
-        return $count." message(s) ont été supprimés par ".$message["author"]["username"];
+        return _t('global.cleanerRecap',$count,$message["author"]["nick"]." (".$message["author"]["username"].")");
     }
 
     public function spam($param)
     {
+        if (gettype($param)<>"integer" | $param > 50) {
+            return "nop";
+        }
         for ($i=0; $i < $param; $i++) { 
            $random = mt_rand(0,1);
            if ($random > 0.2) {
