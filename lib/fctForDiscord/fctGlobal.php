@@ -8,18 +8,16 @@ class fctGlobal extends structure {
     }
 
     function new_char() {
-        global $md;
         if ( !empty( sql::fetch( "select 1 from perso where idPerso='{$this->id}a'" ) ) ) {
             return _t( 'newChar.already' );
         }
-        $msg = _t( 'newChar.welcom' ).'\n\n';
+        $msg = _t( 'newChar.welcome' )."\n\n";
         $msg .= _t( 'newChar.begin', '```xml\n', '\n```' );
 
         $func = function ( $interaction, $options ) use ( &$func ) {
-            global $md;
 
             $idUserInter = $interaction->user->id;
-            $msgDefault = _t( 'newChar.welcom' ).'\n\n';
+            $msgDefault = _t( 'newChar.welcome' ).'\n\n';
             $msgDefault .= _t( 'newChar.begin', '```xml\n', '\n```' );
             $msgError = '> ***__'._t( 'newChar.notUser' ).'.__***\n\n';
             $steps = [
@@ -33,12 +31,12 @@ class fctGlobal extends structure {
                 ],
                 1 => [
                     'msg' => _t( 'newChar.voieP' ),
-                    'param' => 'vPrimaire',
+                    'param' => 'vAll',
                     'bddBefore' => 'genre'
                 ],
                 2 => [
                     'msg' => _t( 'newChar.voieS' ),
-                    'param' => 'vPrimaire',
+                    'param' => 'vAll',
                     'bddBefore' => 'vPrimaire'
                 ],
                 3 => [
@@ -73,10 +71,11 @@ class fctGlobal extends structure {
                 $raceByVoie = sql::getJsonBdd( "select value from botExtra where label='raceByVoie'" );
                 $array = [ 'all' ];
                 $dataTab = [];
-                $result = sql::fetchAll( "SELECT value FROM ficheData WHERE idPerso='$id' AND label IN ('vPrimaire','vSecondaire')" );
+                $result = sql::fetchAll( "SELECT value FROM ficheData WHERE idPerso='$id' AND label in ('vPrimaire','vSecondaire')" );
                 foreach ( $result as $v ) {
                     $array[] = $v[ 0 ];
                 }
+
                 foreach ( $array as $v ) {
                     $v = strtolower( $v );
                     if ( !empty( $raceByVoie[ $v ] ) ) {
@@ -100,10 +99,10 @@ class fctGlobal extends structure {
                 $out[] = [ 'Retour', ( $step-1 )."-$id-Retour" ];
             }
 
-            $md->createSelect( $msg, $out, $func );
+            $GLOBALS['md']->createSelect( $msg, $out, $func );
         }
         ;
-        $md->createSelect( $msg, [ [ 'Site', "0-{$this->id}-Site" ], [ 'Discord', "0-{$this->id}-Discord" ] ], $func );
+        $GLOBALS['md']->createSelect( $msg, [ [ 'Site', "0-{$this->id}-Site" ], [ 'Discord', "0-{$this->id}-Discord" ] ], $func );
     }
 
     function datafiche( $param ) {
@@ -115,55 +114,49 @@ class fctGlobal extends structure {
             'age',
             'caractere',
             'image',
+            'physique',
             'name',
             'objectif',
-            'donName',
-            'donDescription',
-            'donEveil',
-            'donTranscendance',
-            'donComp',
+            'don',
             'story'
         ];
         $array = array_map( 'strtolower', $tab );
         if ( !empty( $champ ) ) {
-            $champMaj = [
-                'donname' => 'donName',
-                'dondescription' => 'donDescription',
-                'doneveil' => 'donEveil',
-                'dontranscendance' => 'donTranscendance',
-                'doncomp' => 'donComp'
-            ];
             if ( !in_array( $champ, $array ) ) {
                 return _t( 'dataFiche.unknown', $param );
             }
             $text = substr( $param, strlen( $champ )+1 );
-            $textArray = explode( '\n', $text );
-            $data = substr( $text, strlen( $textArray[ 0 ] )+1 );
+            $textArray = explode( "\n", $param );
+            $data = substr( $param, strlen( $textArray[ 0 ] )+1 );
             if ( $champ == 'name' ) {
                 $sql = "select 1 from perso where prenom like '" . explode( ' ', $text )[ 0 ] . " %'";
                 if ( sql::fetch( $sql ) ) {
                     return _t( 'dataFiche.errorName' );
                 }
             }
-            if ( $champ == 'age' && !is_numeric( $text ) && $text > 0 ) {
+
+            if ( $champ == 'age' && (!is_numeric( $text ) || $text < 16 )) {
                 return _t( 'dataFiche.errorAge' );
             }
             $taille = strlen( trim( $data ) );
             if ( in_array( $champ, [ 'caractere', 'objectif' ] ) && $taille < 200 ) {
                 return _t( 'dataFiche.errorNbrChar', ( 200-$taille ) );
             }
-            if ( in_array( $champ, [ 'dondescription', 'doneveil', 'dontranscendance', 'doncomp', 'story' ] ) && $taille < 50 ) {
-                return _t( 'dataFiche.errorNbrChar', ( 50-$taille ) );
+
+            if ( $champ == 'don' ) {
+                $nbr = sql::fetch( "select COUNT(1) FROM ficheData WHERE idPerso='$id' AND label LIKE 'text-don-%'" )[ 0 ];
+                $title = addslashes(trim( explode("\n",$text)[0] ));
+                sql::query( "insert into ficheData values('$id','title-story-$nbr','$title',now()) ON DUPLICATE KEY UPDATE value='$title',dateInsert=now()" );
+                $champ = "text-don-$nbr";
             }
 
             if ( $champ == 'story' ) {
                 $nbr = sql::fetch( "select COUNT(1) FROM ficheData WHERE idPerso='$id' AND label LIKE 'text-story-%'" )[ 0 ];
-                $title = trim( $textArray[ 0 ] );
+                $title = addslashes(trim( explode("\n",$text)[0] ));
                 sql::query( "insert into ficheData values('$id','title-story-$nbr','$title',now()) ON DUPLICATE KEY UPDATE value='$title',dateInsert=now()" );
                 $champ = "text-story-$nbr";
             }
 
-            $champ = empty( $champMaj[ $champ ] ) ? $champ : $champMaj[ $champ ];
             $text = addslashes( trim( count( $textArray ) > 1 ? $data : $text ) );
             sql::query( "insert into ficheData values('$id','$champ','$text',now()) ON DUPLICATE KEY UPDATE value='$text',dateInsert=now()" );
 
@@ -178,23 +171,27 @@ class fctGlobal extends structure {
 
         foreach ( $tab as $id ) {
             $val = _t( "dataFiche.$id" );
-            if ( $id == 'story' ) {
-                $size = 0;
-                $countStory = function ( $v, $k ) {
-                    global $size;
-                    if ( strpos( $k, 'ext-story' ) )$size += strlen( $v );
+
+            foreach (['story'=>500,'don'=>200] as $fieldWithChap => $sizeMin){
+                if( $id == $fieldWithChap ){
+                    $size = 0;
+                    $countStory = function ( $v, $k ) use($fieldWithChap) {
+                        global $size;
+                        if ( strpos( $k, "ext-$fieldWithChap") )$size += strlen( $v );
+                    }
+                    ;
+                    array_walk( $exist, $countStory );
+                    if ( $size < $sizeMin ) {
+                        $msg .= "<$id>\n".str_replace( 'xxx', $sizeMin-$size, $val ).!'\n\n';
+                    }
+                    continue 2;
                 }
-                ;
-                array_walk( $exist, $countStory );
-                if ( $size < 500 ) {
-                    $msg .= "<$id>\n".str_replace( 'xxx', 500-$size, $val ).!'\n\n';
-                }
-            } elseif ( empty( $exist[ $id ] ) ) {
+            }
+            if ( empty( $exist[ $id ] ) ) {
                 $msg .= "<$id>\n$val\n\n";
             }
         }
-        $msg .= '```\n'._t( 'dataFiche.exemple' );
-        return $msg;
+        return ($msg == _t( 'dataFiche.msg' )) ? _t('dataFiche.finish') : $msg."```\n"._t( 'dataFiche.exemple' );
     }
     public function daterp($params){
         global $jsonDateRP;
@@ -245,7 +242,7 @@ class fctGlobal extends structure {
         return (_t(__FUNCTION__.'.'.($isAnUpdate  ? $paramsArray[0] : 'success'),$contenu));
     }
 
-      function newtexte($param){
+    function newtexte($param){
         $data = $this->_TraitementData($param,['id','texte']);
         if(count($data) != 2){return $this->help("newtexte");}
         trad::editTrad($data['id'],$data['texte'],$this->isAdmin);
