@@ -2,6 +2,7 @@
 
 class structure {
 
+    public $required;
     public function _init(){
         $this->delete = false;
         $this->md = $GLOBALS['md'];

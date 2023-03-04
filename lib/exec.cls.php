@@ -8,16 +8,15 @@ class exec {
             if(method_exists ($this,$e['action'])){
                 $this->{$e['action']}($e['param'],$e['id']);
             }else{
-                $GLOBALS['md']->sendPrivateMessage('236245509575016451',"Utilisation d'une action[{$e['action']}] inconnu avec l'id {$e['id']}");
+                ApiDiscord::sendPrivateMessage("Utilisation d'une action[{$e['action']}] inconnu avec l'id {$e['id']}",'236245509575016451'); // @TODO à check
                 $this->setIsExec($e['id']);
             }
         }
     }
 
     public function message($json,$id){
-        global $md;
         $json = json_decode($json,true);
-        $md->sendPrivateMessage($json['cible'],$json['message']);
+        ApiDiscord::sendPrivateMessage($json['message'],$json['cible']); // @TODO à check
         $this->setIsExec($id);
     }
 

@@ -39,9 +39,21 @@ class sql
         return $result->fetch();
     }
 
-    public static function fetchAll($qry){
+    public static function fetchAll($qry,$onlyAssoc=null){
         $result = self::query($qry);
-        return $result->fetchAll();
+        return $result->fetchAll($onlyAssoc);
+    }
+
+    // case sensitif !
+    public static function createArrayOrder($qry,$key){
+        $results = sql::fetchAll($qry,PDO::FETCH_ASSOC);
+        $return = [];
+        foreach ($results as $result){
+            $tmpKey = $result[$key];
+            unset($result[$key]);
+            $return[$tmpKey] = $result[array_keys($result)[0]];
+        }
+        return $return;
     }
 
     public static function getJsonBdd ($qry){

@@ -23,7 +23,6 @@ class trad
             $qry = "select texte from trad where lang='$lang' and id='$id'";
             $r = sql::fetch($qry);
             if(empty($r)){
-                var_dump($qry);
                 return false;
             }else{
                 self::$cache[$id] = $r['texte'];

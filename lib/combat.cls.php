@@ -113,9 +113,8 @@ class combat
     // Début combat
     public function beginEvent()
     {
-        global $md;
         // Récupérer les utilisateurs ayant le role "Event" et remplir la table combat avec leur données
-        foreach ($md->getUserWithRole('event') as $cible)
+        foreach (ApiDiscord::getUserWithRole('event') as $cible)
         {
             // var_dump($cible); ## ça te permet de voir le contenu de $cible pour comprendre comment l'utiliser.
             $idUser = $cible->id;
