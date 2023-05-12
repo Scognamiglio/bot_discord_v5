@@ -1,6 +1,6 @@
 <?php
 
-include '/composer/vendor/autoload.php';
+include __DIR__.'/../vendor/autoload.php';
 
 foreach (scandir("lib/static") as $cls){
     if(strpos($cls,'.')!==0) {
