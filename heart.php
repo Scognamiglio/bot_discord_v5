@@ -6,7 +6,7 @@ use Discord\WebSockets\Intents;
 $discord = new Discord([
     'token' => $token[$Env],
     'loadAllMembers' => true,
-    'intents' => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS,
+    'intents' => Intents::getDefaultIntents() | Intents::GUILD_MEMBERS | Intents::MESSAGE_CONTENT,
     'logger' => new \Psr\Log\NullLogger()
 ]);
 
@@ -32,6 +32,7 @@ $discord->on('ready', function ($discord) {
         $GLOBALS['message'] = $message;
        if(!$md->isBot()){
            $id = $message->author->id;
+           var_dump($message->content);
            if($message->content[0] == '!' || strpos($message->content,"**!") === 0){
                global $methodToObject,$allObject;
                preg_match_all("/!([^ ]*) ?(.*)?/s",$message->content,$array);
