@@ -12,25 +12,22 @@ $discord = new Discord([
 
 
 $discord->on('ready', function ($discord) {
-    global $md;
-    $md = new methodDiscord($discord);
+    $GLOBALS['md'] = new methodDiscord($discord);
 
     echo "Bot is ready!", PHP_EOL;
 
 
     $discord->on('CHANNEL_CREATE',function ($channel, Discord $discord) {
-        global $md;
-        if(!$channel->is_private && $channel->type==0){
+         if(!$channel->is_private && $channel->type==0){
             ApiDiscord::createHook($channel->id);
         }
     });
 
     // Listen for messages.
     $discord->on('message', function ($message, $discord) {
-        global $md;
-        $md->set("message",$message);
+        $GLOBALS['md']->set("message",$message);
         $GLOBALS['message'] = $message;
-       if(!$md->isBot()){
+       if(!ApiDiscord::isBot()){
            $id = $message->author->id;
            var_dump($message->content);
            if($message->content[0] == '!' || strpos($message->content,"**!") === 0){
@@ -44,7 +41,7 @@ $discord->on('ready', function ($discord) {
                    $retour = $allObject[$methodToObject[$act]]([$act,$array[2][0]]);
                    if(!empty($retour)){
                        if(is_array($retour)){
-                           $md->sendEmbed($retour);
+                           ApiDiscord::sendEmbed($retour);
                        }else{
                            $message->channel->sendMessage($retour);
                        }

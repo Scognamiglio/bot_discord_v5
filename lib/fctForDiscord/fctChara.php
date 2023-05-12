@@ -7,11 +7,58 @@ class fctChara extends structure {
         $this->required = "fiche";
     }
 
+    public function _ficheFull($idUse){
+        $structFicheFull = [
+            'infoG' => [
+                'name' => "**__%s__** : %s",
+                'genre' => "**__%s__** : %s",
+                'age' => "**__%s__** : %s",
+            ],
+            'perso' => [
+                'caractere' => "**__%s__** : \n%s",
+                'objectif' => "**__%s__** : \n%s",
+            ],
+            'story' => 'withChap',
+
+            'don' => 'withChap',
+
+            'descriptionPhysique' => [
+                'physique' =>"**__%s__** : \n%s\n",
+                'image' => '**__%s__** : %s'
+            ]
+        ];
+        $allData = sql::createArrayOrder("select label,value from ficheData where idPerso='$idUse'",'label');
+        $messages = [];
+        foreach ($structFicheFull as $cat => $array){
+            $messages[] = "\n"._t("ficheFull.$cat")."\n\n";
+            if( $array == 'withChap' ){
+                array_walk($allData,function ($v,$l) use($cat,&$messages,$allData){
+                    if ( strpos( $l, "ext-$cat") ){
+                        $messages[] = "**__".$allData[str_replace('text','title',$l)]."__**\n```".$v."```\n";
+                    }
+                });
+                continue;
+            }
+            foreach ($array as $label=>$format){
+                $messages[] = sprintf($format,_t("ficheFull.$label"),$allData[$label])."\n";
+            }
+        }
+        ApiDiscord::sendLongMessage($messages);
+    }
+
 
     public function fiche($param){
         global $cb;
+
+        $data = $this->_TraitementData($param,['id','full']);
+        $idUse = ($this->isAdmin && isset($data['id'])) ? $data['id'] : $this->id;
+
+        if(isset($data['full'])){
+            $this->_ficheFull($idUse);
+            return false;
+        }
         $stats = $cb->getStatsChar();
-        $perso = new perso($this->id);
+        $perso = new perso($idUse);
         $texteVoie = '';
         foreach ($perso->get('voies') as $v=>$xp){
             $texteVoie.="**$v** : $xp\n";

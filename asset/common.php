@@ -48,7 +48,6 @@ foreach ($methodToObject as $m=>$i){
 
 static $discord;
 static $message;
-$md = false;
 $cb = new combat();
 
 $_SESSION['continue']=true;

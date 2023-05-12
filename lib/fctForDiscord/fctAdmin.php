@@ -201,4 +201,5 @@ class fctAdmin extends structure {
             apiDiscord::editMessage($dataSplit[0],$dataSplit[1],$texte);
         }
     }
+
 }

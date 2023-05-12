@@ -83,7 +83,6 @@ class ApiDiscord
         return ApiDiscord::sendDiscord("delete","channels/$idChannel/messages/$idMessage",[]);
     }
 
-    //TODO Gestion Embed
     public static function getMessage($idChannel=null,$idMessage=null){
         global $message;
         $idChannel = $idChannel ?? $message->channel->id;
@@ -97,5 +96,71 @@ class ApiDiscord
         }
         $json = ApiDiscord::sendDiscord("get","channels/$idChannel/messages/$idMessage",[]);
         return [$json['id'] => $json['content']];
+    }
+
+    public static function sendLongMessage($messages,$idChannel=null){
+        global $message;
+        $max = 2000;
+        $idChannel = $idChannel ?? $message->channel->id;
+        $goodFormat = [];
+        $texte = "";
+        foreach ($messages as $message){
+            if(strlen($message) > $max){
+                return false;
+            }
+
+            if((strlen($message) + strlen($texte)) > $max){
+                $goodFormat[] = $texte;
+                $texte = $message;
+                continue;
+            }
+
+            $texte .= $message;
+        }
+        if(!empty($texte)){
+            end($goodFormat); // move the internal pointer to the end of the array $key = key($array);
+            $lastId = key($goodFormat);
+            if((strlen($goodFormat[$lastId]) + strlen($texte)) > $max){
+                $goodFormat[] = $texte;
+            }else{
+                $goodFormat[$lastId] .= $texte;
+            }
+        }
+
+        foreach ($goodFormat as $msg){
+            $r =ApiDiscord::sendDiscord("post","channels/$idChannel/messages",['content'=>$msg]);
+            if(!empty($r['retry_after'])){
+                usleep(($r['retry_after']*1000000)+250000);
+                $r =ApiDiscord::sendDiscord("post","channels/$idChannel/messages",['content'=>$msg]);
+            }
+            usleep(250000);
+        }
+
+        return true;
+    }
+
+    public static function isPrivate(){
+        global $message;
+        return "Discord\Parts\User\Member" != get_class($message->author);
+    }
+
+    public static function isBot(){
+        global $message;
+        return self::isPrivate() ? $message['author']['bot'] : $message['author']['user']['bot'];
+    }
+
+
+
+    //TODO Gestion sans PHPDISCORD
+    public static function sendEmbed($array){
+        $GLOBALS['md']->sendEmbed($array);
+    }
+
+    public static function getUserWithRole($role){
+        return $GLOBALS['md']->getUserWithRole($role);
+    }
+
+    public static function sendPrivateMessage($id,$text,$tabEmbed=null){
+        return $GLOBALS['md']->sendPrivateMessage($text,$id,$tabEmbed);
     }
 }
