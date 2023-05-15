@@ -123,10 +123,10 @@ class fctChara extends structure {
 
         if($attaquant){
             $user = sql::fetch("select pm,name from combat where name='$attaquant'");
-            if(empty($user)) {return _t('skill.who');}
+            if(empty($user)) {return _t('action.who');}
         }else{
             $user = sql::fetch("SELECT pm,name FROM perso INNER JOIN combat ON SUBSTRING_INDEX(prenom, ' ',1)=name WHERE idPerso='{$this->id}'");
-            if(empty($user)) {return _t('skill.notInBattle');}
+            if(empty($user)) {return _t('action.notInBattle');}
         }
         $skill = empty($array[2][0]) ? 'Attaque' : tools::sansAccent(strtolower(trim($array[2][0])));
 
@@ -136,16 +136,15 @@ class fctChara extends structure {
             $rs = sql::fetch("SELECT idSkill,extra FROM skillPerso INNER JOIN skill USING(idSkill) WHERE idPerso='{$this->id}' AND (alias ='$skill' OR NAME='$skill')");
         }
 
-        if(empty($rs)){return _t('skill.unknown');}
+        if(empty($rs)){return _t('action.unknown');}
         $extra = json_decode($rs['extra'],true);
-        if(!empty($extra['cost']) && $extra['cost'] > $user[0]){return _t('skill.lost',($extra['cost']-$user[0]));}
-
+        if(!empty($extra['cost']) && $extra['cost'] > $user[0]){return _t('action.lost',($extra['cost']-$user[0]));}
         $nbrCible = empty($extra['nbr']) ? 1 : $extra['nbr'];
         if(is_numeric($nbrCible)){
             $cibles =  explode(",",tools::sansAccent(strtolower(trim($array[1][0]))));
-            if(count($cibles) != $nbrCible){return _t('skill.nbr',$nbrCible);}
+            if(count($cibles) != $nbrCible){return _t('action.nbr',$nbrCible);}
             foreach ($cibles as $cible){
-                if(empty(sql::fetch("select 1 from combat where name='$cible'"))){return _t('skill.unknownCible',$cible);}
+                if(empty(sql::fetch("select 1 from combat where name='$cible'"))){return _t('action.unknownCible',$cible);}
             }
             $dataCible = implode(",",$cibles);
         }else{

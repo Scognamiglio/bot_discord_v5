@@ -22,7 +22,7 @@ class combat
         // skill
         $result = sql::fetchAll("SELECT extra FROM skillPerso INNER JOIN skill USING (idSkill) WHERE idPerso='$id_perso' AND type='passif'");
         $statSkill = ['pv' => 0, 'pm' => 0, 'atk' => 0, 'int' => 0];
-        $other = [];
+        $passifs = [];
         foreach ($result as $value){
             $json = json_decode($value['extra'],true);
             if(isset($json['stats'])){
@@ -34,7 +34,7 @@ class combat
 
             if(!empty($json)){
                 foreach ($json as $l=>$v){
-                    $other[$l] = (isset($other[$l]) ? $other[$l] : 0)+$v;
+                    $passifs[$l] = (isset($passifs[$l]) ? $passifs[$l] : 0)+$v;
                 }
             }
         }
@@ -46,7 +46,7 @@ class combat
         }
 
         // Item ??? ///
-        $statDefault['other'] = $other;
+        $statDefault['passifs'] = $passifs;
         return $statDefault;
 
     }
@@ -80,7 +80,7 @@ class combat
 
 
     // return pv
-    public function degat($degat, $cible)
+    public function damage($degat, $cible)
     {
         $result = sql::fetch("SELECT pv,team FROM combat WHERE name = '$cible'");
         if (empty($result)) {return "error";}
@@ -102,13 +102,6 @@ class combat
         return false;
     }
 
-    public function processDegat($degat, $cible){
-        $stat = $this->getStat($cible);
-        if(!empty($stat['other']['protec'])){$degat = $degat * (1-$stat['other']['protec']/100);}
-
-        // Attr + stuff + buff
-        $this->degat($degat,$cible);
-    }
 
     // Début combat
     public function beginEvent()
@@ -141,15 +134,35 @@ class combat
 
     }
 
-    public function effectifAtk ($user,$pui,$data){
-        $passif = $user['stats']['other'];
+
+    public function effectiveDamage($degat, $cible){
+
+        $stat = $this->getStat($cible);
+        if(!empty($stat['passifs']['protec'])){$degat = $degat * (1-$stat['passifs']['protec']/100);}
+
+        // Todo Gestion des buffs pour réduction de dégâts subis + potentiellement les passifs de voies.
+
+        // Attr + stuff + buff
+        $this->damage($degat,$cible);
+    }
+
+
+    public function effectiveAtk ($user,$pui,$data){
+        $passif = $user['stats']['passifs'];
 
         // Passif de voie.
         $checkV = ['voie','typeVoie'];
+        $puiBrut = $pui;
+        // @TODO Ajouté les différents passif des voies (Si l'effet ne s'applique pas obligatoirement)
         foreach ($checkV as $v){
-            if(!empty($passif[$data[$v]])) { $pui += $pui * $passif[$data[$v]] / 100;}
+            if(!empty($passif[$data[$v]])) { $pui += $puiBrut * $passif[$data[$v]] / 100;}
         }
-        // Buff
+        // item
+        // ...
+
+
+
+        // @TODO ajouté les buffs qui s'applique ici
         return $pui;
     }
 
@@ -157,31 +170,36 @@ class combat
         $idAct = array_keys($user['actions'])[0];
         $act = $user['actions'][$idAct];
         $result = sql::fetch("SELECT extra,label as typeVoie,SUBSTRING_INDEX(idSkill, '-',1) AS voie FROM skill s LEFT JOIN botExtra be ON be.value LIKE CONCAT('%\"',SUBSTRING_INDEX(idSkill, '-',1),'\"%') AND label IN ('voieE','voieA') WHERE s.idSkill='{$act[0]}'");
-        $passif = $user['stats']['other'];
+        $passif = $user['stats']['passifs'];
         $data = ['typeVoie'=>$result['typeVoie'],'voie' => $result['voie']];
-        $pui = $this->effectifAtk($user,$pui,$data);
+        $pui = $this->effectiveAtk($user,$pui,$data);
 
         $extra = json_decode($result['extra'],true);
         // Applique l'action pour chaque cible
         $already = [];
         foreach (explode(",",$act[1]) as $cible){
             // Foreach pour gérer les actions dans le bon ordre.
+            // Généralement, dans extra, si un % est présent, c'est un % du stat en question. Dans le cas contraire, c'est un coef de l'atk effective
             foreach ($extra as $label=>$value){
                 $label = strtolower($label);
                 // Si déjà exécuté et ne doit pas être relancé.
                 if(isset($already[$label]) && $already[$label]){continue;}
 
-                if($label == "dmg"){$this->processDegat($pui*$value,$cible);}
-                if($label == "heal"){$this->degat($pui*$value*-1,$cible);}
+                // TODO Rajouté gestion des différents tag dans la colonne extra pour la table skill
+                if($label == "dmg"){$this->effectiveDamage($pui*$value,$cible);}
+                if($label == "heal"){$this->damage($pui*$value*-1,$cible);}
 
+                // Random cible SELECT name FROM combat ORDER BY RAND() LIMIT 1
 
                 if($label == "selfheal"){
-                    $this->degat(round(-1*$value*$pui),$user['name']);
+                    $this->damage(round(-1*$value*$pui),$user['name']);
                     $already[$label] = true;
                 }
             }
 
         }
+
+        // @Todo potentiellement gestion d'une action ou d'un buff qui s'applique à la fin de l'action (Récupération de vie si meurtre et ...)
         sql::query("update action set already=1 where id='$idAct' AND 1!=(SELECT VALUE FROM botExtra WHERE label='testSkill')");
     }
 
