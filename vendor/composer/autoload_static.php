@@ -9,16 +9,11 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
     public static $files = array (
         'ad155f8f1cf0d418fe49e248db8c661b' => __DIR__ . '/..' . '/react/promise/src/functions_include.php',
         'c4e03ecd470d2a87804979c0a8152284' => __DIR__ . '/..' . '/react/async/src/functions_include.php',
-        'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
-        '25072dd6e2470089de65ae7bf11d3109' => __DIR__ . '/..' . '/symfony/polyfill-php72/bootstrap.php',
-        'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
         '972fda704d680a3a53c68e34e193cb22' => __DIR__ . '/..' . '/react/promise-timer/src/functions_include.php',
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
-        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
-        'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
-        '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
         'ebf8799635f67b5d7248946fe2154f4a' => __DIR__ . '/..' . '/ringcentral/psr7/src/functions_include.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         'a1105708a18b76903365ca1c4aa61b02' => __DIR__ . '/..' . '/symfony/translation/Resources/functions.php',
         '3be16222a6efa6dd226a219eaaff823b' => __DIR__ . '/..' . '/ratchet/pawl/src/functions_include.php',
@@ -33,19 +28,10 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
         'S' => 
         array (
             'Symfony\\Polyfill\\Php80\\' => 23,
-            'Symfony\\Polyfill\\Php72\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
-            'Symfony\\Polyfill\\Intl\\Normalizer\\' => 33,
-            'Symfony\\Polyfill\\Intl\\Idn\\' => 26,
             'Symfony\\Contracts\\Translation\\' => 30,
-            'Symfony\\Contracts\\Service\\' => 26,
-            'Symfony\\Contracts\\EventDispatcher\\' => 34,
             'Symfony\\Component\\Translation\\' => 30,
             'Symfony\\Component\\OptionsResolver\\' => 34,
-            'Symfony\\Component\\Mime\\' => 23,
-            'Symfony\\Component\\Mailer\\Bridge\\Google\\' => 39,
-            'Symfony\\Component\\Mailer\\' => 25,
-            'Symfony\\Component\\EventDispatcher\\' => 34,
         ),
         'R' => 
         array (
@@ -69,35 +55,21 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
             'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
-            'Psr\\Http\\Client\\' => 16,
-            'Psr\\EventDispatcher\\' => 20,
-            'Psr\\Container\\' => 14,
         ),
         'M' => 
         array (
             'Monolog\\' => 8,
         ),
-        'L' => 
-        array (
-            'League\\OAuth2\\Client\\' => 21,
-        ),
         'G' => 
         array (
             'GuzzleHttp\\Psr7\\' => 16,
-            'GuzzleHttp\\Promise\\' => 19,
-            'GuzzleHttp\\' => 11,
         ),
         'F' => 
         array (
             'Fig\\Http\\Message\\' => 17,
         ),
-        'E' => 
-        array (
-            'Egulias\\EmailValidator\\' => 23,
-        ),
         'D' => 
         array (
-            'Doctrine\\Common\\Lexer\\' => 22,
             'Discord\\Http\\' => 13,
             'Discord\\' => 8,
         ),
@@ -116,33 +88,13 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Symfony\\Polyfill\\Php72\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-php72',
-        ),
         'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
         ),
-        'Symfony\\Polyfill\\Intl\\Normalizer\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer',
-        ),
-        'Symfony\\Polyfill\\Intl\\Idn\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-intl-idn',
-        ),
         'Symfony\\Contracts\\Translation\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/translation-contracts',
-        ),
-        'Symfony\\Contracts\\Service\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/service-contracts',
-        ),
-        'Symfony\\Contracts\\EventDispatcher\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/event-dispatcher-contracts',
         ),
         'Symfony\\Component\\Translation\\' => 
         array (
@@ -151,22 +103,6 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
         'Symfony\\Component\\OptionsResolver\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/options-resolver',
-        ),
-        'Symfony\\Component\\Mime\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/mime',
-        ),
-        'Symfony\\Component\\Mailer\\Bridge\\Google\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/google-mailer',
-        ),
-        'Symfony\\Component\\Mailer\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/mailer',
-        ),
-        'Symfony\\Component\\EventDispatcher\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/event-dispatcher',
         ),
         'RingCentral\\Psr7\\' => 
         array (
@@ -237,49 +173,17 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Psr\\Http\\Client\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/http-client/src',
-        ),
-        'Psr\\EventDispatcher\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/event-dispatcher/src',
-        ),
-        'Psr\\Container\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/container/src',
-        ),
         'Monolog\\' => 
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
-        ),
-        'League\\OAuth2\\Client\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/league/oauth2-client/src',
         ),
         'GuzzleHttp\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
-        'GuzzleHttp\\Promise\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
-        ),
-        'GuzzleHttp\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
-        ),
         'Fig\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/fig/http-message-util/src',
-        ),
-        'Egulias\\EmailValidator\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/egulias/email-validator/src',
-        ),
-        'Doctrine\\Common\\Lexer\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/doctrine/lexer/src',
         ),
         'Discord\\Http\\' => 
         array (
@@ -287,8 +191,8 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
         ),
         'Discord\\' => 
         array (
-            0 => __DIR__ . '/..' . '/team-reflex/discord-php/src/Discord',
-            1 => __DIR__ . '/..' . '/discord/interactions/discord',
+            0 => __DIR__ . '/..' . '/discord/interactions/discord',
+            1 => __DIR__ . '/..' . '/team-reflex/discord-php/src/Discord',
         ),
         'Carbon\\' => 
         array (
@@ -316,7 +220,6 @@ class ComposerStaticInit6567a0f5eb72b2b0be243849ec62df96
     public static $classMap = array (
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'Normalizer' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/Resources/stubs/Normalizer.php',
         'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
