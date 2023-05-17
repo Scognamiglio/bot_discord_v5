@@ -7,8 +7,8 @@ use Discord\Builders\Components\SelectMenu;
 use Discord\Builders\Components\Option;
 class methodDiscord {
 
-    private $discord;
-    private $message;
+    private $discord,$http,$message,$factory ;
+
 
     /*
      * Construct

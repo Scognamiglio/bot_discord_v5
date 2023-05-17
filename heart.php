@@ -29,13 +29,10 @@ $discord->on('ready', function ($discord) {
         $GLOBALS['message'] = $message;
        if(!ApiDiscord::isBot()){
            $id = $message->author->id;
-           var_dump($message->content);
            if($message->content[0] == '!' || strpos($message->content,"**!") === 0){
                global $methodToObject,$allObject;
                preg_match_all("/!([^ ]*) ?(.*)?/s",$message->content,$array);
-
                $act = tools::alias(strtolower($array[1][0]));
-
                if(isset($methodToObject[$act])){
                    // Check
                    $retour = $allObject[$methodToObject[$act]]([$act,$array[2][0]]);
@@ -50,7 +47,6 @@ $discord->on('ready', function ($discord) {
                        ApiDiscord::deleteMessage();
                    }
                }
-
            }
            elseif(preg_match_all("/^\(([^)]*)\) (.*)$/s",$message->content,$array) > 0){
                $qry = "SELECT name,img FROM pnj WHERE alias='{$array[1][0]}' AND who='$id'";
