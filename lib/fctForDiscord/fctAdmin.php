@@ -55,7 +55,7 @@ class fctAdmin extends structure {
         if(count($param) != 2){
             $msg = _t('errorParam',2);
         }else{
-            $result = $cb->degat($param[1],$param[0]);
+            $result = $cb->damage($param[1],$param[0]);
             if(false===$result){
                 $msg = _t('degat.alreadyKill',$param[0]);
             }elseif($result===0){
@@ -148,24 +148,27 @@ class fctAdmin extends structure {
         global $cb;
         $team = trim(explode("```",$param)[0]);
         $actions = $cb->getActionTour($team);
-        if(empty($actions)) {return _t('tour.empty',$team);}
+        if(empty($actions)) {return _t('tour.empty',$team);} //Todo gérer tour vide
 
         preg_match_all("/\[([^]]*)\] ?(?:\(([^)]*)\))?/s",$param,$actTour);
         $nbrAction = count($actTour[0]);
         $error = [];
+        // @Todo pensé à mettre à jour la liste des buffs au début du tour
+        // @Todo gestion des effets de buffs avant le tour
         for ($i=0;$i<$nbrAction;$i++){
             $userName = $actTour[1][$i];
             if(empty($actions[$actTour[1][$i]]['actions'])){$error[] = _t('tour.notExist',$actTour[1][$i]);continue;}
             $user = $actions[$userName];
             $user['name'] = $userName;
-            $coef = trim(empty($actTour[2][$i]) ? 0 : $actTour[2][$i]);
+            $modificateur = trim(empty($actTour[2][$i]) ? 0 : $actTour[2][$i]);
             $pui = $user['stats']['atk'];
-            $pui = strpos($coef,"%") ? ($pui/100)*substr($coef,0,-1) : $pui+$coef;
+            $pui = strpos($modificateur,"%") ? ($pui/100)*substr($modificateur,0,-1) : $pui+$modificateur;
 
             $cb->useSkill($user,$pui);
             $idAct = array_keys($actions[$userName]['actions'])[0];
             unset($actions[$userName]['actions'][$idAct]);
         }
+        // @Todo gestion des effets de buffs à la fin du tour
 
         // Rajouté le rapport créer par Vymarel-Sama
 
