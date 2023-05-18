@@ -39,7 +39,7 @@ class sql
         return $result->fetch();
     }
 
-    public static function fetchAll($qry,$onlyAssoc=null){
+    public static function fetchAll($qry,$onlyAssoc=0){
         $result = self::query($qry);
         return $result->fetchAll($onlyAssoc);
     }

@@ -2,7 +2,7 @@
 
 class structure {
 
-    public $required;
+    public  $delete,$md,$message,$id,$isPrivate,$isAdmin,$required;
     public function _init(){
         $this->delete = false;
         $this->md = $GLOBALS['md'];
