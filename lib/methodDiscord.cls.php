@@ -37,7 +37,7 @@ class methodDiscord {
      * Etat
      */
     public function isPrivate(){
-        return "Discord\Parts\User\Member" != get_class($this->message->author);
+        return empty($this->message->guild_id);
     }
 
     public function isAdmin(){
