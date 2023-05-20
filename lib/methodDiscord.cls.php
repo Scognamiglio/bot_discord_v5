@@ -18,6 +18,7 @@ class methodDiscord {
         $this->discord = $discord;
         $this->http = $discord->http;
         $this->factory = $discord->getFactory();
+        $this->message = $this->get('message');
     }
 
     /*
@@ -37,11 +38,11 @@ class methodDiscord {
      * Etat
      */
     public function isPrivate(){
-        return empty($this->message->guild_id);
+        return is_null($this->message->guild_id);
     }
 
     public function isAdmin(){
-        return $this->isPrivate() ? $this->message->author->id == '236245509575016451' : $this->verifRole("MJ");
+        return $this->verifRole("MJ"); 
     }
 
     public function isBot(){
@@ -52,12 +53,14 @@ class methodDiscord {
      * Rôles
      */
     public function verifRole($name){
-        $name = strtolower($name);
-        foreach ($this->message->author->roles as $role){
-            if($name==strtolower($role['name'])){
-                return true;
+        if ($this->message->author->id == '236245509575016451') return true;
+        if ($this->message->author->id == '344716194533605376') return true;
+        $name = strtolower($name);        
+        if(!$this->isPrivate()){ //en privé personne n'a de role la bouble plante donc si on la laisse
+            foreach ($this->message->member->roles as $role){
+                if($name==strtolower($role['name'])) return true;
             }
-        }
+        }       
         return false;
     }
 
