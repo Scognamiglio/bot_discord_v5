@@ -5,10 +5,10 @@ use function React\Partial\bind as Bind;
 use Discord\Builders\MessageBuilder;
 use Discord\Builders\Components\SelectMenu;
 use Discord\Builders\Components\Option;
+
 class methodDiscord {
 
-    private $discord,$http,$message,$factory ;
-
+    private $discord,$http,$message,$factory;
 
     /*
      * Construct
@@ -18,6 +18,7 @@ class methodDiscord {
         $this->discord = $discord;
         $this->http = $discord->http;
         $this->factory = $discord->getFactory();
+        $this->message = $this->get('message');
     }
 
     /*
@@ -37,11 +38,11 @@ class methodDiscord {
      * Etat
      */
     public function isPrivate(){
-        return empty($this->message->guild_id);
+        return is_null($this->message->guild_id);
     }
 
     public function isAdmin(){
-        return $this->isPrivate() ? $this->message->author->id == '236245509575016451' : $this->verifRole("MJ");
+        return in_array($this->message->author->id,['236245509575016451','344716194533605376'])||$this->verifRole("MJ"); 
     }
 
     public function isBot(){
@@ -52,13 +53,13 @@ class methodDiscord {
      * Rôles
      */
     public function verifRole($name){
-        $name = strtolower($name);
-        foreach ($this->message->author->roles as $role){
-            if($name==strtolower($role['name'])){
-                return true;
-            }
-        }
-        return false;
+        return !$this->isPrivate() 
+            && in_array(
+                strtolower($name),
+                array_map(
+                    function($v)
+                        {return strtolower($v['name']);},
+                    $this->message->member->roles->toArray()));
     }
 
     public function getRoleId($nameRole){
@@ -72,6 +73,7 @@ class methodDiscord {
             }
         }
     }
+
     public function getUserWithRole($role){
         if($this->isPrivate()){
             return false;

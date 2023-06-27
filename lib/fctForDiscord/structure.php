@@ -9,8 +9,8 @@ class structure {
         $this->message = $this->md->get('message');
         $this->id = $this->message['author']['id'];
         $GLOBALS['id'] = $this->message['author']['id'];
-        $this->isPrivate = "Discord\Parts\User\Member" != get_class($this->message->author);
-        $this->isAdmin = $this->isPrivate ? $this->message->author->id == '236245509575016451' : $this->md->verifRole("MJ");
+        $this->isPrivate = $this->md->isPrivate();
+        $this->isAdmin = $this->md->isAdmin(); 
     }
 
     public function _TraitementData($data,$struct){
@@ -48,8 +48,9 @@ class structure {
                     $error = _t("global.notWithFiche");
                 break;
             case "admin":
-                if(!$this->isAdmin)
+                if(!$this->isAdmin) {
                     $error = _t("global.notAdmin");
+                }                    
                 break;
         }
         if(!empty($error)){
