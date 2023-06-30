@@ -138,7 +138,7 @@ class fctChara extends structure {
 
         if(empty($rs)){return _t('action.unknown');}
         $extra = json_decode($rs['extra'],true);
-        if(!empty($extra['cost']) && $extra['cost'] > $user[0]){return _t('action.lost',($extra['cost']-$user[0]));}
+        if(!empty($extra['costPM']) && $extra['costPM'] > $user[0]){return _t('action.lost',($extra['costPM']-$user[0]));}
         $nbrCible = empty($extra['nbr']) ? 1 : $extra['nbr'];
         if(is_numeric($nbrCible)){
             $cibles =  explode(",",tools::sansAccent(strtolower(trim($array[1][0]))));
@@ -151,8 +151,8 @@ class fctChara extends structure {
             $dataCible = $nbrCible;
         }
 
-        if(!empty($extra['cost'])){
-            $pm = $user[0]-$extra['cost'];
+        if(!empty($extra['costPM'])){
+            $pm = $user[0]-$extra['costPM'];
             sql::query("update combat set pm='$pm' where name='{$user[1]}'");
         }
 
@@ -209,21 +209,23 @@ class fctChara extends structure {
 
         $beginIdSkillSplit = explode(" ",$nameSkill);
         $one = count($beginIdSkillSplit) > 1 || (!empty($beginIdSkillSplit[0]) && !in_array($beginIdSkillSplit[0],$perso->getAllVoie()));
+        $nbr = 0;
+        $myId = "";
+        array_map(function($f) use(&$nbr,&$myId){
+            array_map(function($f2) use(&$nbr,&$myId){
+                $nbr += count($f2);
+                $myId = $f2[0]['idSkill'];
+            },$f);
+        },$allSkill);
+        $one = $nbr < 4;
         if(!empty($act)){
             $actParam = $act[array_keys($act)[0]];
             $act = strtolower(array_keys($act)[0]);
-            if(!$one){
+            if($nbr != 1){
                 return _t('skill.errorToSkill');
             }
-            $myId = null;
-            if(!empty($allSkill['already'])){
-                $myId = $allSkill['already'][array_keys($allSkill['already'])[0]][0]['idSkill'];
-            }
-            if(!empty($allSkill['empty'])){
-                if($act == 'alias'){
-                    return _t('skill.noSkillForAlias');
-                }
-                $myId = $allSkill['empty'][array_keys($allSkill['empty'])[0]][0]['idSkill'];
+            if(!empty($allSkill['empty']) && $act == 'alias'){
+                return _t('skill.noSkillForAlias');
             }
             return empty($myId) ? _t('skill.notFound') : $perso->{$act."Skill"}($myId,$actParam);
         }
@@ -236,10 +238,10 @@ class fctChara extends structure {
                 if(empty($nameSkill)) {$retour .= _t('skill.voie')." : ***".$voie."***\n";}
                 foreach ($skills as $skill){
                     $retour .= $one ? '>' : '-';
-                    $retour .= " **__{$skill['name']}__** ({$skill['id']})\n```xml\n";
+                    $retour .= " **__{$skill['name']}__** ({$skill['idSkill']})\n```xml\n";
                     if($one){
                         $retour.= "<"._t('skill.info').">\n";
-                        $retour.= _t('skill.already')." : ". ($line1=="empty" ? "Non" : "Oui")."\n";
+                        $retour.= _t('skill.already'). ($line1=="empty" ? "Non" : "Oui")."\n";
                     }
                     foreach ($fields as $field){
                         if(!empty($skill[$field])){

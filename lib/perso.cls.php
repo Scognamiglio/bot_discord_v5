@@ -106,27 +106,22 @@ class perso
     }
 
     public function getAllSkillPerso($beginIdSkill=null){
-        $qry ="select s.idSkill,s.name,s.type,s.description,s.extra,s.cost,sP.id,sP.alias,sP.level from skill s left JOIN skillPerso sP on s.idSkill=sP.idSkill and idPerso='".$this->idPerso."' where ";
-        $qryParts = [];
-        foreach ($this->get('voies') as $voie=>$ptn){
-            $qryParts[]= "(s.idSkill LIKE '$voie-%' AND SUBSTRING_INDEX(s.idskill,'-',-1) <= $ptn) ";
-        }
-        $qry .= " (".implode(" OR ",$qryParts).")";
-        if(isset($beginIdSkill) && !empty($beginIdSkill)){
-            $beginIdSkillSplit = explode(" ",$beginIdSkill);
+        $qry = 'select s.idSkill,s.name,s.type,s.description,s.extra,s.cost,sP.id,sP.alias,sP.level
+        FROM skill s
+        JOIN (
+            SELECT SUBSTRING_INDEX(idSkill, "-", 1) AS type, COUNT(1) AS nbr
+            FROM skillPerso WHERE idPerso="'.$this->idPerso.'"
+            GROUP BY SUBSTRING_INDEX(idSkill, "-", 1)
+        ) AS subquery ON SUBSTRING_INDEX(s.idSkill, "-", 1) = subquery.type
+        LEFT JOIN skillPerso sP ON sP.idSkill=s.idSkill
+        WHERE s.idSkill LIKE CONCAT(subquery.type, "-%")
+          AND SUBSTRING_INDEX(SUBSTRING_INDEX(s.idSkill, "-",-2), "-",1) <= subquery.nbr';
 
-            if(count($beginIdSkillSplit) > 1 || !in_array($beginIdSkillSplit[0],$this->getAllVoie())){
-                $qry .= " AND (s.idSkill='".implode("-",$beginIdSkillSplit)."' ";
-                $qry .= " OR s.name='$beginIdSkill' OR sP.alias='$beginIdSkill' ";
-                unset($beginIdSkillSplit[0]);
-                if(!empty($beginIdSkillSplit)){
-                    $qry .= " OR s.name='".implode(" ",$beginIdSkillSplit)."' OR sP.alias='".implode(" ",$beginIdSkillSplit)."'";
-                }
-                $qry .= ")";
-            }else{
-                $qry .= " AND s.idSkill like '$beginIdSkill%'";
-            }
+        if(isset($beginIdSkill) && !empty($beginIdSkill)){
+            $beginIdSkillWithTiret = str_replace(" ","-",$beginIdSkill);
+            $qry .= " and (s.idSkill like '%$beginIdSkillWithTiret%' or s.name like '%$beginIdSkill%' or sP.alias like '%$beginIdSkill%')";
         }
+
         $data = ['already'=>[],'empty'=>[]];
         foreach (sql::fetchAll($qry) as $value){
             $line1 = !empty($value['id']) ? 'already' : 'empty';
@@ -138,7 +133,6 @@ class perso
                     $value['cost'] = $value['level'] == $extra['up']['max'] ? 'max' : $value['cost']*$value['level'];
                 }
             }
-            $value['id'] = $idSkill[1];
 
             $data[$line1][$idSkill[0]][] = $value;
         }

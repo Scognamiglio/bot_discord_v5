@@ -1,9 +1,10 @@
-<?php 
+<?php
 /* 
 aucun message si pas fct ou exec / this->retour = $parametre > $cherche a acceder a la donnée et send message si plusieur message
 */
 class combat
 {
+    public $team = 0;
     public function getStatsChar($id_perso = null)
     {
         if (empty($id_perso))
@@ -82,6 +83,7 @@ class combat
     // return pv
     public function damage($degat, $cible)
     {
+        $degat = round($degat);
         $result = sql::fetch("SELECT pv,team FROM combat WHERE name = '$cible'");
         if (empty($result)) {return "error";}
         $pvRestants = $result['pv'];
@@ -109,7 +111,6 @@ class combat
         // Récupérer les utilisateurs ayant le role "Event" et remplir la table combat avec leur données
         foreach (ApiDiscord::getUserWithRole('event') as $cible)
         {
-            // var_dump($cible); ## ça te permet de voir le contenu de $cible pour comprendre comment l'utiliser.
             $idUser = $cible->id;
             $nameUser = explode(' ', $cible->username) [0];
             $statsCible = $this->getStatsChar($idUser);
@@ -130,22 +131,10 @@ class combat
             }
             $return[$r['perso']]['actions'][$r['id']] = [$r['skill'],$r['cible']];
         }
+        $this->team = $team;
         return $return;
 
     }
-
-
-    public function effectiveDamage($degat, $cible){
-
-        $stat = $this->getStat($cible);
-        if(!empty($stat['passifs']['protec'])){$degat = $degat * (1-$stat['passifs']['protec']/100);}
-
-        // Todo Gestion des buffs pour réduction de dégâts subis + potentiellement les passifs de voies.
-
-        // Attr + stuff + buff
-        $this->damage($degat,$cible);
-    }
-
 
     public function effectiveAtk ($user,$pui,$data){
         $passif = $user['stats']['passifs'];
@@ -160,11 +149,24 @@ class combat
         // item
         // ...
 
-
+        $pui = $this->effetActif($pui,$user['name'],1);
 
         // @TODO ajouté les buffs qui s'applique ici
         return $pui;
     }
+
+    public function effectiveDamage($degat, $cible){
+
+        $stat = $this->getStat($cible);
+        if(!empty($stat['passifs']['protec'])){$degat = $degat * (1-$stat['passifs']['protec']/100);}
+
+        // Todo Gestion des buffs pour réduction de dégâts subis + potentiellement les passifs de voies.
+
+        $degat = $this->effetActif($degat,$cible,2);
+        // Attr + stuff + buff
+        $this->damage($degat,$cible);
+    }
+
 
     public function useSkill($user,$pui){
         $idAct = array_keys($user['actions'])[0];
@@ -195,6 +197,19 @@ class combat
                     $this->damage(round(-1*$value*$pui),$user['name']);
                     $already[$label] = true;
                 }
+
+                if($label == "effetcombat"){
+                    foreach($value as $effet){
+                        switch ($effet[4]) {
+                            case 'self':
+                                $effet[4] = $user['name'];
+                                break;
+                            case 'cible':
+                                $effet[4] = $cible;
+                        }
+                        $this->addEffect($effet);
+                    }
+                }
             }
 
         }
@@ -202,5 +217,68 @@ class combat
         // @Todo potentiellement gestion d'une action ou d'un buff qui s'applique à la fin de l'action (Récupération de vie si meurtre et ...)
         sql::query("update action set already=1 where id='$idAct' AND 1!=(SELECT VALUE FROM botExtra WHERE label='testSkill')");
     }
+    public function addEffect($effet) {
+        var_dump("insert into effetCombat(label,TYPE,modificateur,nbrTour,cible,team) values('".implode("','",$effet)."')");
+        sql::query("insert into effetCombat(label,TYPE,modificateur,nbrTour,cible,team) values('".implode("','",$effet)."')");
+    }
 
+    public function effetActif($value,$cible,$typeEffet){
+        
+        $effets = sql::fetchAll("select label,modificateur from effetCombat WHERE type='$typeEffet' and (cible='$cible' OR (cible='all' and team=(SELECT team FROM combat c WHERE c.name='$cible')))");
+        $effetsPerso = sql::fetchAll("SELECT extra FROM skill s INNER JOIN skillPerso sP ON s.idSkill=sP.idSkill INNER JOIN perso p ON sP.idPerso = p.idPerso WHERE p.prenom LIKE '$cible%' AND TYPE='buff-$typeEffet'");
+
+        array_map(function($f) use(&$effets){
+            $json = json_decode($f['extra'],true);
+            foreach($json as $k=>$v){
+                $effets[] = ['label' => $k , 'modificateur'=>$v];
+            }
+        },$effetsPerso);
+
+
+        $valueBrut = $value;
+        $afters = [];
+        foreach ($effets as $effet){
+            if($effet['label'] == 'effetAtk'){
+                $value = tools::operation($effet['modificateur'],['{v}'=>$value,'{vB}'=>$valueBrut]);
+            }
+            if($effet['label'] == 'sustain'){
+                var_dump($effet);
+                $afters[] = $effet;
+            }
+        }
+        var_dump($afters);
+
+        foreach($afters as $after){
+            if($after['label'] == 'sustain'){
+                $this->damage(Tools::operation($after['modificateur'],['{v}'=>$value]),$cible);
+            }
+        }
+        return $value;
+    }
+
+    public function effetTour($team,$typeEffet){
+        $effets = sql::fetchAll("select label,modificateur,cible from effetCombat where type='$typeEffet' and team='$team'");
+        foreach ($effets as $effet){
+
+            $listCible = $this->getCibleForSkill($team,$effet['cible']);
+            foreach ($listCible as $cible){
+                if($effet['label'] == 'periodique-pv'){
+                    $this->damage($effet['modificateur'],$cible);
+                }
+            }
+        }
+    }
+
+    public function getCibleForSkill($team,$cible){
+        $list = [];
+        if($cible == 'all'){
+            array_map(function ($x) use(&$list){
+                $list[] = $x['name'];},
+                sql::fetchAll("select name from combat where team='$team'")
+            );
+        }else{
+            $list[] = $cible;
+        }
+        return $list;
+    }
 }
