@@ -9,14 +9,14 @@ class fctAdmin extends structure {
 
     public function stop($param){
         $_SESSION['continue']=false;
-        $this->message->channel->sendMessage("Bonne nuit <3");
+        ApiDiscord::sendMessage("Bonne nuit <3");
         sleep(1);
         $this->md->get('discord')->close();
     }
 
     // don't work
     public function run($param){
-        $this->message->channel->sendMessage("Bonne nuit <3");
+        ApiDiscord::sendMessage("Bonne nuit <3");
         sleep(1);
         $this->md->get('discord')->close();
     }
@@ -153,8 +153,7 @@ class fctAdmin extends structure {
         preg_match_all("/\[([^]]*)\] ?(?:\(([^)]*)\))?/s",$param,$actTour);
         $nbrAction = count($actTour[0]);
         $error = [];
-        // @Todo pensé à mettre à jour la liste des buffs au début du tour
-        // @Todo gestion des effets de buffs avant le tour
+        $cb->effetTour($team,0);
         for ($i=0;$i<$nbrAction;$i++){
             $userName = $actTour[1][$i];
             if(empty($actions[$actTour[1][$i]]['actions'])){$error[] = _t('tour.notExist',$actTour[1][$i]);continue;}
@@ -168,9 +167,8 @@ class fctAdmin extends structure {
             $idAct = array_keys($actions[$userName]['actions'])[0];
             unset($actions[$userName]['actions'][$idAct]);
         }
-        // @Todo gestion des effets de buffs à la fin du tour
-
-        // Rajouté le rapport créer par Vymarel-Sama
+        $cb->effetTour(null,3);
+        return $this->stats();
 
     }
 
