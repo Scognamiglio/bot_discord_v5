@@ -147,6 +147,10 @@ class fctAdmin extends structure {
     public function tour($param){
         global $cb;
         $team = trim(explode("```",$param)[0]);
+        // Si 0, alors tour pnj.
+        if($team === "0"){
+            return $this->_tourPnj($param);
+        }
         $actions = $cb->getActionTour($team);
         if(empty($actions)) {return _t('tour.empty',$team);} //Todo gérer tour vide
 
@@ -170,6 +174,27 @@ class fctAdmin extends structure {
         $cb->effetTour(null,3);
         return $this->stats();
 
+    }
+
+    public function _tourPnj($param){
+        global $cb;
+        preg_match_all("/\[([^]]*)\] ?(?:\(([^)]*)\))? ?(?:\(([^)]*)\))?/s",$param,$actTour);
+        $nbrAction = count($actTour[0]);
+        for ($i=0;$i<$nbrAction;$i++){
+            $cibles = explode(",",$actTour[1][$i]);
+            foreach($cibles as $cible){
+                $cb->cible = $cible;
+                if(!empty($actTour[2][$i])){
+                    $cb->effectiveDamage($actTour[2][$i],$cb->cible);
+                }
+                var_dump($actTour[3]);
+                if(!empty($actTour[3][$i])){
+                    $cb->addEffect(json_decode($actTour[3][$i]));
+                }
+            }
+        }
+
+        return $this->stats();
     }
 
     public function trad($param){

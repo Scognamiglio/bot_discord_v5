@@ -5,6 +5,8 @@ aucun message si pas fct ou exec / this->retour = $parametre > $cherche a accede
 class combat
 {
     public $team = 0;
+    public $cible = "";
+    public $userName = "";
     public function getStatsChar($id_perso = null)
     {
         if (empty($id_perso))
@@ -180,6 +182,8 @@ class combat
         // Applique l'action pour chaque cible
         $already = [];
         foreach (explode(",",$act[1]) as $cible){
+            $this->cible = $cible;
+            $this->nameUser = $user['name'];
             // Foreach pour gérer les actions dans le bon ordre.
             // Généralement, dans extra, si un % est présent, c'est un % du stat en question. Dans le cas contraire, c'est un coef de l'atk effective
             foreach ($extra as $label=>$value){
@@ -200,13 +204,6 @@ class combat
 
                 if($label == "effetcombat"){
                     foreach($value as $effet){
-                        switch ($effet[4]) {
-                            case 'self':
-                                $effet[4] = $user['name'];
-                                break;
-                            case 'cible':
-                                $effet[4] = $cible;
-                        }
                         $this->addEffect($effet);
                     }
                 }
@@ -218,6 +215,13 @@ class combat
         sql::query("update action set already=1 where id='$idAct' AND 1!=(SELECT VALUE FROM botExtra WHERE label='testSkill')");
     }
     public function addEffect($effet) {
+        switch ($effet[4]) {
+            case 'self':
+                $effet[4] = $this->userName ?? '';
+                break;
+            case 'cible':
+                $effet[4] = $this->cible ?? '';
+        }
         var_dump("insert into effetCombat(label,TYPE,modificateur,nbrTour,cible,team) values('".implode("','",$effet)."')");
         sql::query("insert into effetCombat(label,TYPE,modificateur,nbrTour,cible,team) values('".implode("','",$effet)."')");
     }
@@ -242,11 +246,9 @@ class combat
                 $value = tools::operation($effet['modificateur'],['{v}'=>$value,'{vB}'=>$valueBrut]);
             }
             if($effet['label'] == 'sustain'){
-                var_dump($effet);
                 $afters[] = $effet;
             }
         }
-        var_dump($afters);
 
         foreach($afters as $after){
             if($after['label'] == 'sustain'){
