@@ -107,6 +107,43 @@ class fctAdmin extends structure {
         global $cb;
         if (empty($param)) {
             $msg = $cb->getStatsAll();
+            var_dump($msg);
+
+            $format = [
+                'life' => '%s [%s PV][%s PM]', // Si en vie
+                'KO' => '%s'
+            ];
+
+            $sqlt = [
+                'Title' => ">> Stats",
+                "FieldValues" => [],
+                "Color" => "0x00AE86",
+            ];
+
+            foreach($msg as $team=>$array){
+                $sqlt['FieldValues'][] = ["", "> **__Team $team __**",false];
+                $ret = [];
+                array_map(function($f) use($format,&$ret){
+                    $state = $f['pv'] > 0 ? 'life' : 'KO';
+                    $ret[$state][] = sprintf($format[$state],$f['name'],$f['pv'],$f['pm']);
+                },$array['perso']);
+                if(isset($ret['life'])){
+                    $sqlt['FieldValues'][] = ["En état","```md\n".implode("\n",$ret['life'])."\n```",'inline'];
+                }
+                if(isset($ret['KO'])){
+                    $sqlt['FieldValues'][] = ["Ko","```ml\n".implode("\n",$ret['KO'])."\n```",'inline'];
+                }
+                if(isset($array['buff'])){
+                    $listBuff = [];
+                    array_map(function($f) use(&$listBuff){$listBuff[] = sprintf('%s [%s][%s Tours][%s]',$f['label'],$f['cible'],$f['nbrTour'],$f['modificateur']);},$array['buff']);
+
+                    $sqlt['FieldValues'][] = ["Effet","```md\n".implode("\n",$listBuff)."\n```",0];
+                }
+            }
+            return $sqlt;
+
+            //return $sqlt;
+            return "maintenance";
             $equipe = "";
             $vivants = "";
             $ko = "";

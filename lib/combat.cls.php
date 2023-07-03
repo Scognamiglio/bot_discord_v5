@@ -73,10 +73,18 @@ class combat
      * récupérer les statistique de tout les participants en les regroupant par team dans un tableau
      */
     public function getStatsAll() {
-        $content = sql::fetchAll("SELECT * FROM combat ORDER BY team");
+        $content = sql::fetchAll("SELECT * FROM combat ORDER BY pv desc"); // Trie par pv pour avoir dans l'ordre les personnages en vie, puis K.O
         $tabAff = [];
         foreach ($content as $cible) {
-            $tabAff[$cible["team"]][$cible["name"]] = ['pv' => $cible['pv'], 'pm' => $cible['pm'], 'lvl' => $cible['level']];
+            $tabAff[$cible["team"]]['perso'][] = ['name' => ucfirst($cible["name"]),'pv' => $cible['pv'], 'pm' => $cible['pm'], 'lvl' => $cible['level']];
+        }
+        $contentBuff = sql::fetchAll("select team,label,cible,nbrTour,modificateur from effetCombat",1);
+        foreach($contentBuff as $buff){
+            if(isset($tabAff[$buff['team']])){
+                $t = $buff['team'];
+                unset($buff['team']);
+                $tabAff[$t]['buff'][] = $buff;
+            }
         }
         return $tabAff;
     }
@@ -183,7 +191,7 @@ class combat
         $already = [];
         foreach (explode(",",$act[1]) as $cible){
             $this->cible = $cible;
-            $this->nameUser = $user['name'];
+            $this->userName = $user['name'];
             // Foreach pour gérer les actions dans le bon ordre.
             // Généralement, dans extra, si un % est présent, c'est un % du stat en question. Dans le cas contraire, c'est un coef de l'atk effective
             foreach ($extra as $label=>$value){
