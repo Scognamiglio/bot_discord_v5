@@ -41,7 +41,7 @@ class sql
 
     public static function fetchAll($qry,$onlyAssoc=0){
         $result = self::query($qry);
-        return $result->fetchAll($onlyAssoc);
+        return $result->fetchAll($onlyAssoc ? PDO::FETCH_ASSOC : 0);
     }
 
     // case sensitif !
