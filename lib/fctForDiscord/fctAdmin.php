@@ -38,6 +38,97 @@ class fctAdmin extends structure {
         $this->md->sendPrivateMessage($idCible,'',$sqlt);
     }
 
+    public function valid($param){
+        $id = trim($param);
+        if(!is_numeric($id)){
+            return _t('valid.notNum');
+        }
+        $result = sql::fetch("select 1 from perso where idPerso='$id'");
+        if(!empty($result)){
+            return _t('valid.CharExist');
+        }
+
+        $dataFiche = sql::createArrayOrder("select label,value from ficheData where idPerso='$id'",'label');
+
+        $error = [];
+        // Age
+        if(empty($dataFiche['age']) || $dataFiche['age'] < 15){
+            $error[] = 'age';
+        }
+
+        // empty
+        foreach(['race','vPrimaire','vSecondaire','genre','image','name'] as $field){
+            if(empty($dataFiche[$field])){
+                $error[] = $field;
+            }
+        }
+
+        // Length
+        foreach(['objectif'=>200,'caractere' => 200,'physique' => 100] as $field=>$size){
+            if(empty($dataFiche[$field]) || strlen($dataFiche[$field]) < $size){
+                $error[] = $field;
+            }
+        }
+
+        // Length chap
+        foreach(['don'=>200,'story'=>500] as $field=>$size){
+            $sizeAll = 0;
+            array_walk($dataFiche, function($v,$k) use (&$sizeAll,$field){
+                if(strpos($k,"text-$field") !== false){
+                    $sizeAll += strlen($v);
+                }
+            });
+            var_dump($sizeAll,$field);
+            if($sizeAll < $size){
+                $error[] = $field;
+            }
+        }
+
+        if(!empty($error)){
+            return _t('valid.error',implode(',',$error));
+        }
+
+        $sqlPerso = tools::prepareInsert('perso',[
+            'idPerso' => $id,
+            'race' => $dataFiche['race'],
+            'prenom' => $dataFiche['name'],
+            'sexe' => $dataFiche['genre'],
+            'age' => $dataFiche['age'],
+            'niveau' => '1',
+            'xp' => '0',
+            'avatar' => $dataFiche['image'],
+            'stats' => '{"pv":0,"pm":0,"atk":0,"int":0}',
+            'pSkill' => 0,
+            'pSkillTotal' => 0,
+            'pLatent' => 5,
+            'pDestin' => 10
+        ]);
+        sql::query($sqlPerso);
+
+        $sqlPnj = tools::prepareInsert('pnj',[
+            'alias' => $dataFiche['name'],
+            'name' => $dataFiche['name'],
+            'img' => $dataFiche['image'],
+            'who' => $id
+        ]);
+        sql::query($sqlPnj);
+
+        $sqlSkillPrimaire = tools::prepareInsert('skillPerso',[
+            'idPerso' => $id,
+            'idSkill' => $dataFiche['vPrimaire'].'-1-1'
+        ]);
+        sql::query($sqlSkillPrimaire);
+        
+        $s2 = $dataFiche['vPrimaire'] == $dataFiche['vSecondaire'] ? ($dataFiche['vSecondaire'].'-1-2') : ($dataFiche['vSecondaire'].'-1-1');
+        $sqlSkillSecondaire = tools::prepareInsert('skillPerso',[
+            'idPerso' => $id,
+            'idSkill' => $s2
+        ]);
+        sql::query($sqlSkillSecondaire);
+
+        return _t('valid.good',$dataFiche['name']);
+    }
+
 
     public function hook($param){
         ApiDiscord::createHook($this->message->channel->id);
