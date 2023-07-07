@@ -86,9 +86,9 @@ class perso
             $newXp -=$xpLevel;
         }
         $this->update('xp',$newXp);
-        $this->update('pSkill',$this->get('pSkill') + $xp);
-        $this->update('pSkillTotal',$this->get('pSkillTotal') + $xp);
-        $this->update('pLatent',$this->get('pLatent') + ($xp*2));
+        $this->update('pSkill',$this->get('pSkill') + 5);
+        $this->update('pSkillTotal',$this->get('pSkillTotal') + 5);
+        $this->update('pLatent',$this->get('pLatent') + 10);
         return $newXp;
     }
 
