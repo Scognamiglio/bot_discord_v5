@@ -5,8 +5,10 @@ aucun message si pas fct ou exec / this->retour = $parametre > $cherche a accede
 class combat
 {
     public $team = 0;
+    public $confused = 0;
     public $cible = "";
     public $userName = "";
+    public $addRapport = [];
     public function getStatsChar($id_perso = null)
     {
         if (empty($id_perso))
@@ -187,9 +189,16 @@ class combat
         $pui = $this->effectiveAtk($user,$pui,$data);
 
         $extra = json_decode($result['extra'],true);
+        if(!empty($extra['acc']) && (rand(0,100) > $extra['acc'])){
+            $pui = 0;
+        }
         // Applique l'action pour chaque cible
         $already = [];
         foreach (explode(",",$act[1]) as $cible){
+            $randomNumber = rand(0, 100);
+            if(($this->confused != 0) && ($this->confused > $randomNumber)){
+                $cible = $this->randomCible();
+            }
             $this->cible = $cible;
             $this->userName = $user['name'];
             // Foreach pour gérer les actions dans le bon ordre.
@@ -212,7 +221,14 @@ class combat
 
                 if($label == "effetcombat"){
                     foreach($value as $effet){
+                        $effet['2'] = round(tools::operation($effet['2'],['{v}'=>$pui]));
                         $this->addEffect($effet);
+                    }
+                }
+
+                if($label == "clean"){
+                    if($value == 'dot'){
+                        sql::query("delete FROM effetCombat WHERE label='periodique-pv' AND cible='$cible' AND modificateur not LIKE '-%'");
                     }
                 }
             }
@@ -222,6 +238,11 @@ class combat
         // @Todo potentiellement gestion d'une action ou d'un buff qui s'applique à la fin de l'action (Récupération de vie si meurtre et ...)
         sql::query("update action set already=1 where id='$idAct' AND 1!=(SELECT VALUE FROM botExtra WHERE label='testSkill')");
     }
+
+    public function randomCible() {
+        return sql::fetch("SELECT name FROM combat where pv > 0 ORDER BY RAND() LIMIT 1")['name'];
+    }
+
     public function addEffect($effet) {
         switch ($effet[4]) {
             case 'self':
@@ -230,7 +251,6 @@ class combat
             case 'cible':
                 $effet[4] = $this->cible ?? '';
         }
-        var_dump("insert into effetCombat(label,TYPE,modificateur,nbrTour,cible,team) values('".implode("','",$effet)."')");
         sql::query("insert into effetCombat(label,TYPE,modificateur,nbrTour,cible,team) values('".implode("','",$effet)."')");
     }
 
@@ -238,23 +258,32 @@ class combat
         
         $effets = sql::fetchAll("select label,modificateur from effetCombat WHERE type='$typeEffet' and (cible='$cible' OR (cible='all' and team=(SELECT team FROM combat c WHERE c.name='$cible')))");
         $effetsPerso = sql::fetchAll("SELECT extra FROM skill s INNER JOIN skillPerso sP ON s.idSkill=sP.idSkill INNER JOIN perso p ON sP.idPerso = p.idPerso WHERE p.prenom LIKE '$cible%' AND TYPE='buff-$typeEffet'");
-
-        array_map(function($f) use(&$effets){
-            $json = json_decode($f['extra'],true);
-            foreach($json as $k=>$v){
-                $effets[] = ['label' => $k , 'modificateur'=>$v];
-            }
-        },$effetsPerso);
-
+        if(!empty($effetsPerso)){
+            array_map(function($f) use(&$effets){
+                $json = json_decode($f['extra'],true);
+                foreach($json as $k=>$v){
+                    $effets[] = ['label' => $k , 'modificateur'=>$v];
+                }
+            },$effetsPerso);
+        }
 
         $valueBrut = $value;
         $afters = [];
         foreach ($effets as $effet){
+            if($effet['label'] == 'confused'){
+                $this->confused = $effet['modificateur'];
+            }
             if($effet['label'] == 'effetAtk'){
                 $value = tools::operation($effet['modificateur'],['{v}'=>$value,'{vB}'=>$valueBrut]);
             }
             if($effet['label'] == 'sustain'){
                 $afters[] = $effet;
+            }
+            if($effet['label'] == 'dodge'){
+                if($value > 0 && (rand(0,100) < $effet['modificateur'])){
+                    $this->addRapport[] = "$cible à esquiver l'attaque";
+                    return 0;
+                }
             }
         }
 
