@@ -78,7 +78,6 @@ class fctAdmin extends structure {
                     $sizeAll += strlen($v);
                 }
             });
-            var_dump($sizeAll,$field);
             if($sizeAll < $size){
                 $error[] = $field;
             }
@@ -198,7 +197,6 @@ class fctAdmin extends structure {
         global $cb;
         if (empty($param)) {
             $msg = $cb->getStatsAll();
-            var_dump($msg);
 
             $format = [
                 'life' => '%s [%s PV][%s PM]', // Si en vie
@@ -226,38 +224,23 @@ class fctAdmin extends structure {
                 }
                 if(isset($array['buff'])){
                     $listBuff = [];
-                    array_map(function($f) use(&$listBuff){$listBuff[] = sprintf('%s [%s][%s Tours][%s]',$f['label'],$f['cible'],$f['nbrTour'],$f['modificateur']);},$array['buff']);
+                    array_map(function($f) use(&$listBuff){
+                        $checkBuffOrDebuff = [
+                            'periodique-pv' => [
+                                'Dégât','Soin'
+                                ]
+                            ];
+                        if(!empty($checkBuffOrDebuff[$f['label']])){
+                            $f['label'] = $checkBuffOrDebuff[$f['label']][$f['modificateur'] > 0 ? 0 : 1];
+                            $f['modificateur'] = abs($f['modificateur']);
+                        }
+                        $listBuff[] = sprintf('%s [%s][%s Tours][%s]',$f['label'],$f['cible'],$f['nbrTour'],$f['modificateur']);
+                    },$array['buff']);
 
                     $sqlt['FieldValues'][] = ["Effet","```md\n".implode("\n",$listBuff)."\n```",0];
                 }
             }
             return $sqlt;
-
-            //return $sqlt;
-            return "maintenance";
-            $equipe = "";
-            $vivants = "";
-            $ko = "";
-            $ret = "";
-            $curseur = array_keys($msg);
-            $i = 0;
-            foreach ($msg as $element) {
-                $equipe .= "\n**<Equipe ".($curseur[$i]+1). " >**\n\n";
-                $i++;
-                foreach ($element as $key => $value) {
-                    ($value['pv'] > 0) ?
-                        $vivants .= "<" . ucfirst($key) . "> [" . $value['pv'] . " PV]" . "[" . $value['pm'] . " PM]\n"
-                        :
-                        $ko .=  ucfirst($key) . "\n";
-                }
-                $equipe .= ($ko !== "") ? "**KO :**\n```ml\n$ko```\n" : "Aucun KO\n\n";
-                $ko = "";
-                $equipe .= ($vivants !== "") ? "**En état de combattre :\n**```md\n$vivants```" : "Aucun survivant, dommage...\n";
-                $vivants = "";
-                $ret .= $equipe . "\n";
-                $equipe = ""; 
-            }
-            return  "**__Rapport__**\n$ret";
         }
     }
 
@@ -315,7 +298,6 @@ class fctAdmin extends structure {
                 if(!empty($actTour[2][$i])){
                     $cb->effectiveDamage($actTour[2][$i],$cb->cible);
                 }
-                var_dump($actTour[3]);
                 if(!empty($actTour[3][$i])){
                     $cb->addEffect(json_decode($actTour[3][$i]));
                 }

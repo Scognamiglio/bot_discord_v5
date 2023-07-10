@@ -59,6 +59,7 @@ class tools
 
     public static function operation($op,$dyna){
         $dyna[',']='.';
+        $dyna[' ']='';
         $op = str_replace(array_keys($dyna),array_values($dyna),$op);
         if(preg_match('/^[0-9+*\/\-\.]*$/',$op)){
             return eval("return $op;"); // !!!!! Ne jamais faire d'eval sans être sur à 100% du contenu de la variable !!!
