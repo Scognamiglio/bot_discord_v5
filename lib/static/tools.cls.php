@@ -57,14 +57,17 @@ class tools
         return $act;
     }
 
-    public static function operation($op,$dyna){
+    public static function operation($op,$dyna,$round = false){
         $dyna[',']='.';
         $dyna[' ']='';
         $op = str_replace(array_keys($dyna),array_values($dyna),$op);
         if(preg_match('/^[0-9+*\/\-\.]*$/',$op)){
-            return eval("return $op;"); // !!!!! Ne jamais faire d'eval sans être sur à 100% du contenu de la variable !!!
+            $ret = eval("return $op;"); // !!!!! Ne jamais faire d'eval sans être sur à 100% du contenu de la variable !!!
+            if($round){
+                $ret = round($ret);
+            }
+            return $ret; // !!!!! Ne jamais faire d'eval sans être sur à 100% du contenu de la variable !!!
         }
-        //Potentiellement log car attaque XSS essayé.
-        return 0;
+        return $op;
     }
 }
