@@ -93,25 +93,25 @@ class combat
 
 
     // return pv
-    public function damage($degat, $cible)
+    public function damage($degat, $cible, $field="pv")
     {
         $degat = round($degat);
-        $result = sql::fetch("SELECT pv,team FROM combat WHERE name = '$cible'");
+        $result = sql::fetch("SELECT $field,team FROM combat WHERE name = '$cible'");
         if (empty($result)) {return "error";}
-        $pvRestants = $result['pv'];
+        $pRestants = $result[$field];
 
         $stats = $this->getStat($cible);
 
         if ($stats == "error") {return $stats;}
-        $pvMax = $stats['pv'];
+        $pMax = $stats[$field];
 
-        if ($pvRestants != 0)
+        if ($pRestants != 0)
         {
-            $pvRestants -= $degat;
-            $pvRestants = $pvRestants > $pvMax ? $pvMax : ($pvRestants > 0 ? $pvRestants : 0);
+            $pRestants -= $degat;
+            $pRestants = $pRestants > $pMax ? $pMax : ($pRestants > 0 ? $pRestants : 0);
 
-            sql::query("UPDATE combat SET pv = ROUND('$pvRestants') WHERE name = '$cible'");
-            return $pvRestants;
+            sql::query("UPDATE combat SET $field = ROUND('$pRestants') WHERE name = '$cible'");
+            return $pRestants;
         }
         return false;
     }
@@ -326,6 +326,13 @@ class combat
                     return 0;
                 }
             }
+            if($effet['label'] == 'stun'){
+                if($value > 0 && (rand(0,100) < $effet['modificateur'])){
+                    $this->addRapport[] = "$cible à rater son attaque";
+                    sql::query("delete from effetCombat where cible='$cible' and label='stun'");
+                    return 0;
+                }
+            }
         }
 
         foreach($afters as $after){
@@ -344,7 +351,7 @@ class combat
                 $json = json_decode($f['extra'],true);
                 $stats = $this->getStat($f['name']);
                 foreach($json as $k=>$v){
-                    $effets[] = ['label' => $k , 'modificateur'=>Tools::operation($v,['{pvMax}'=>$stats['pv']]), 'cible'=>$f['name']];
+                    $effets[] = ['label' => $k , 'modificateur'=>Tools::operation($v,['{pvMax}'=>$stats['pv'],'{pmMax}'=>$stats['pm']]), 'cible'=>$f['name']];
                 }
             },$effetsPerso);
         }
@@ -355,6 +362,9 @@ class combat
             foreach ($listCible as $cible){
                 if($effet['label'] == 'periodique-pv'){
                     $this->damage($effet['modificateur'],$cible);
+                }
+                if($effet['label'] == 'periodique-pm'){
+                    $this->damage($effet['modificateur'],$cible,'pm');
                 }
             }
         }
