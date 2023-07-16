@@ -221,7 +221,7 @@ class combat
 
                 if($label == "effetcombat"){
                     foreach($value as $effet){
-                        $effet['2'] = round(tools::operation($effet['2'],['{v}'=>$pui]));
+                        $effet['2'] = tools::operation($effet['2'],['{v}'=>$pui],true);
                         $this->addEffect($effet);
                     }
                 }
@@ -230,6 +230,35 @@ class combat
                     if($value == 'dot'){
                         sql::query("delete FROM effetCombat WHERE label='periodique-pv' AND cible='$cible' AND modificateur not LIKE '-%'");
                     }
+                }
+                if($label == "revenge"){
+                    $percent = (sql::fetch("SELECT pv from combat WHERE NAME='".$user['name']."'")['pv'] / $user['stats']['pv']) * 100;
+                    if($percent < $value[0]){
+                        $pui = tools::operation($value[1],['{v}'=>$pui]);
+                    }
+                }
+                if($label == "change"){
+                    $qry = "select ".implode(",",$value).",name from combat where name in('{$cible}','{$user['name']}') and team=1";
+                    $who = sql::fetchAll($qry, true);
+                    if(count($who) != 2){
+                        $this->addRapport[] = "Nombre de cible incohérent";
+                        continue;
+                    }
+                    $k1 = $who[1]['name'];unset($who[1]['name']);
+                    $k0 = $who[0]['name'];unset($who[0]['name']);
+                    $tab = [
+                        $k0 => $who[1],
+                        $k1 => $who[0]
+                    ];
+                    foreach($tab as $user=>$array){
+                        $stats = $this->getStat($user);
+                        foreach($array as $k=>$v){
+                            $v = ($v > $stats[$k]) ? $stats[$k] : $v;
+                            $array[$k] = "$k ='$v'";
+                        }
+                        sql::query("update combat set ".implode(',',$array)." where name='$user'");
+                    }
+                    
                 }
             }
 
@@ -244,13 +273,13 @@ class combat
     }
 
     public function addEffect($effet) {
-        switch ($effet[4]) {
-            case 'self':
-                $effet[4] = $this->userName ?? '';
-                break;
-            case 'cible':
-                $effet[4] = $this->cible ?? '';
-        }
+        $replace = [
+            'self' => $this->userName,
+            'cible' => $this->cible
+        ];
+        $effet = array_map(function($v) use($replace){
+            return str_replace(array_keys($replace),$replace,$v);
+        },$effet );
         sql::query("insert into effetCombat(label,TYPE,modificateur,nbrTour,cible,team) values('".implode("','",$effet)."')");
     }
 
@@ -267,8 +296,20 @@ class combat
             },$effetsPerso);
         }
 
-        $valueBrut = $value;
         $afters = [];
+        // Si une priorité sur un effet
+        foreach ($effets as $i=>$effet){
+            if($effet['label'] == 'protection'){
+                $param = explode("=>",$effet['modificateur']);
+                $damageRedirect = round(($value*trim($param[1]))/100);
+                $this->effectiveDamage($damageRedirect,$param[0]);
+                $value = $value - $damageRedirect;
+                unset($effets[$i]);
+                continue;
+            }
+        }
+        $valueBrut = $value;
+
         foreach ($effets as $effet){
             if($effet['label'] == 'confused'){
                 $this->confused = $effet['modificateur'];
@@ -297,6 +338,17 @@ class combat
 
     public function effetTour($team,$typeEffet){
         $effets = sql::fetchAll("select label,modificateur,cible from effetCombat where type='$typeEffet' and team='$team'");
+        $effetsPerso = sql::fetchAll("SELECT extra,c.name FROM combat c INNER JOIN perso p ON p.prenom LIKE CONCAT('%',c.name,'%') INNER JOIN skillPerso sp ON p.idPerso=sp.idPerso INNER JOIN skill s ON s.idSkill=sp.idSKill WHERE team = '$team' AND TYPE='buff-$typeEffet'");
+        if(!empty($effetsPerso)){
+            array_map(function($f) use(&$effets){
+                $json = json_decode($f['extra'],true);
+                $stats = $this->getStat($f['name']);
+                foreach($json as $k=>$v){
+                    $effets[] = ['label' => $k , 'modificateur'=>Tools::operation($v,['{pvMax}'=>$stats['pv']]), 'cible'=>$f['name']];
+                }
+            },$effetsPerso);
+        }
+
         foreach ($effets as $effet){
 
             $listCible = $this->getCibleForSkill($team,$effet['cible']);
