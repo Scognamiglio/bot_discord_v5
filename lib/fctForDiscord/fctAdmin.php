@@ -204,13 +204,13 @@ class fctAdmin extends structure {
             ];
 
             $sqlt = [
-                'Title' => ">> Stats",
+                'description' => "# Stats",
                 "FieldValues" => [],
                 "Color" => "0x00AE86",
             ];
 
             foreach($msg as $team=>$array){
-                $sqlt['FieldValues'][] = ["", "> **__Team $team __**",false];
+                $sqlt['FieldValues'][] = ["", "### **__Team $team __**",false];
                 $ret = [];
                 array_map(function($f) use($format,&$ret){
                     $state = $f['pv'] > 0 ? 'life' : 'KO';

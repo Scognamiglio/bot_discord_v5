@@ -311,6 +311,9 @@ class combat
         $valueBrut = $value;
 
         foreach ($effets as $effet){
+            if($effet['label'] == 'reward'){
+                $afters[] = $effet;
+            }
             if($effet['label'] == 'confused'){
                 $this->confused = $effet['modificateur'];
             }
@@ -336,7 +339,9 @@ class combat
         }
 
         foreach($afters as $after){
-            if($after['label'] == 'sustain'){
+            if(
+                ($after['label'] == 'sustain' && $value > 0) || ($after['label'] == 'reward' && $value < 0)
+            ){
                 $this->damage(Tools::operation($after['modificateur'],['{v}'=>$value]),$cible);
             }
         }
