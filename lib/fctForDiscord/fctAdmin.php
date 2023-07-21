@@ -208,8 +208,13 @@ class fctAdmin extends structure {
                 'life' => '%s [%s PV][%s PM]', // Si en vie
                 'KO' => '%s'
             ];
+            $sqlt = [
+                'description' => "# Stats",
+                "FieldValues" => [],
+                "Color" => "0x00AE86",
+            ];
             foreach($msg as $team=>$array){
-                $sqlt['FieldValues'][] = ["", "> **__Team $team __**",false];
+                $sqlt['FieldValues'][] = ["", "### **__Team $team __**",false];
                 $ret = [];
                 array_map(function($f) use($format,&$ret){
                     $state = $f['pv'] > 0 ? 'life' : 'KO';
@@ -318,14 +323,23 @@ class fctAdmin extends structure {
 
     public function _tourPnj($param){
         global $cb;
-        preg_match_all("/\[([^]]*)\] ?(?:\(([^)]*)\))? ?(?:\(([^)]*)\))?/s",$param,$actTour);
+        preg_match_all("/\[([^]]*)\] ?(?:\(([^)]*)\))? ?(?:\(([^)]*)\))? ?(?:\{([^)]*)\})?/s",$param,$actTour);
         $nbrAction = count($actTour[0]);
         for ($i=0;$i<$nbrAction;$i++){
             $cibles = explode(",",$actTour[1][$i]);
             foreach($cibles as $cible){
                 $cb->cible = $cible;
+                $degat = $actTour[2][$i] ?? 0;
+
+                if(!empty($actTour[4][$i])){
+                    $degat = $cb->effetActif($degat,$actTour[4][$i],1);
+                    if($degat == 0){
+                        continue;
+                    }
+                }
+
                 if(!empty($actTour[2][$i])){
-                    $cb->effectiveDamage($actTour[2][$i],$cb->cible);
+                    $cb->effectiveDamage($degat,$cb->cible);
                 }
                 if(!empty($actTour[3][$i])){
                     $cb->addEffect(json_decode($actTour[3][$i]));
