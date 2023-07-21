@@ -195,6 +195,12 @@ class fctAdmin extends structure {
     public function stats($param = null)
     {
         global $cb;
+        $sqlt = [
+            'Title' => ">> Stats",
+            "FieldValues" => [],
+            "Color" => "0x00AE86",
+        ];
+
         if (empty($param)) {
             $msg = $cb->getStatsAll();
 
@@ -202,13 +208,6 @@ class fctAdmin extends structure {
                 'life' => '%s [%s PV][%s PM]', // Si en vie
                 'KO' => '%s'
             ];
-
-            $sqlt = [
-                'Title' => ">> Stats",
-                "FieldValues" => [],
-                "Color" => "0x00AE86",
-            ];
-
             foreach($msg as $team=>$array){
                 $sqlt['FieldValues'][] = ["", "> **__Team $team __**",false];
                 $ret = [];
@@ -241,6 +240,36 @@ class fctAdmin extends structure {
                 }
             }
             return $sqlt;
+        }else{
+            $result = sql::fetchAll("SELECT c.name AS nameChar,s.name AS nameSkill,extra,alias
+            FROM combat c
+            INNER JOIN perso p ON p.prenom LIKE CONCAT('%',c.name,'%')
+            LEFT JOIN skillPerso sp ON sp.idPerso=p.idPerso
+            LEFT JOIN skill s ON sp.idSkill=s.idSkill
+            WHERE team='1'",true);
+            $fullData = [];
+            foreach($result as $value){
+                if(empty($fullData[$value['nameChar']])){
+                    $stats = $cb->getStat($value['nameChar']);
+                    unset($stats['passifs']);
+                    $fullData[$value['nameChar']]['stats'] = sprintf("```js\n%s```",implode("\n",array_map(function($v,$k){
+                        return "$k:$v";},$stats,array_keys($stats)
+                    )));
+                }
+                if(!empty($value['nameSkill'])){
+                    $fullData[$value['nameChar']]['skills'][] = 
+                        $value['nameSkill'] .
+                        (empty($value['alias']) ? '' : "[{$value['alias']}]") .
+                        (strpos($value['extra'],'costPM')===false ? '' : "(".json_decode($value['extra'],true)['costPM']."pm)");
+                }
+            }
+
+            $retour = "";
+            foreach($fullData as $name=>$data){
+                $retour.= "### **$name**\n> **Stats**\n{$data['stats']}".(!empty($data['skills']) ? "\n> **Skills**\n```md\n".implode("\n",$data['skills'])."```" : "")."\n";
+            }
+
+            return $retour;
         }
     }
 
